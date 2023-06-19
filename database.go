@@ -2,8 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"os"
 	"path"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -61,6 +63,27 @@ func (db *DB) init() error {
   end TEXT, 
   block_id INTEGER, 
   FOREIGN KEY(block_id) REFERENCES block(id) ON DELETE CASCADE)
+  `
+	_, err = db.db.Exec(q)
+	if err != nil {
+		return err
+	}
+
+	q = `
+  CREATE TABLE IF NOT EXISTS current 
+  (id INTEGER PRIMARY KEY ASC, 
+  current_block_id INTEGER, 
+  current_pause_id INTEGER)
+  `
+	_, err = db.db.Exec(q)
+	if err != nil {
+		return err
+	}
+
+	//_, err = db.db.Exec("INSERT OR IGNORE INTO ui (id, list_order) VALUES(1, '')")
+	q = `
+  INSERT OR IGNORE INTO current (id, current_block_id, current_pause_id)
+  VALUES (1, -1, -1)
   `
 	_, err = db.db.Exec(q)
 	if err != nil {
@@ -269,4 +292,219 @@ func (db *DB) updatePause(pause Pause) error {
 		return err
 	}
 	return nil
+}
+
+func (db *DB) getCurrentBlockID() (int, error) {
+	q := `
+  SELECT current_block_id from current
+  WHERE id = 1
+  `
+
+	row := db.db.QueryRow(q)
+
+	var id int
+
+	if err := row.Scan(&id); err != nil {
+		return -1, err
+	}
+
+	return id, nil
+}
+
+func (db *DB) setCurrentBlockID(id int) error {
+	q := `
+  UPDATE current
+  SET current_block_id = ?
+  WHERE id = 1
+  `
+
+	_, err := db.db.Exec(q, id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *DB) getCurrentPauseID() (int, error) {
+	q := `
+  SELECT current_pause_id from current
+  WHERE id = 1
+  `
+
+	row := db.db.QueryRow(q)
+
+	var id int
+
+	if err := row.Scan(&id); err != nil {
+		return -1, err
+	}
+
+	return id, nil
+}
+
+func (db *DB) setCurrentPauseID(id int) error {
+	q := `
+  UPDATE current
+  SET current_pause_id = ?
+  WHERE id = 1
+  `
+
+	_, err := db.db.Exec(q, id)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *DB) startBlock() (Block, error) {
+	var newBlock Block
+
+	currentBlockID, err := db.getCurrentBlockID()
+	if err != nil {
+		return newBlock, err
+	}
+	if currentBlockID != -1 {
+		return newBlock, errors.New("current block already active")
+	}
+
+	block := BlockCreate{
+		Start: time.Now().Format(time.RFC3339),
+	}
+	newBlock, err = db.addBlock(block)
+	if err != nil {
+		return newBlock, err
+	}
+
+	err = db.setCurrentBlockID(newBlock.Id)
+	if err != nil {
+		return newBlock, err
+	}
+
+	return newBlock, nil
+}
+
+func (db *DB) endBlock() (Block, error) {
+	var block Block
+
+	currentBlockID, err := db.getCurrentBlockID()
+	if err != nil {
+		return block, err
+	}
+	if currentBlockID == -1 {
+		return block, errors.New("no current block active")
+	}
+
+	q := `
+  UPDATE block
+  SET end = ?
+  WHERE id = ?
+  `
+	end := time.Now().Format(time.RFC3339)
+	_, err = db.db.Exec(q, end, currentBlockID)
+	if err != nil {
+		return block, err
+	}
+
+	block, err = db.getBlockByID(currentBlockID)
+	if err != nil {
+		return block, err
+	}
+
+	err = db.setCurrentBlockID(-1)
+	if err != nil {
+		return block, err
+	}
+
+	return block, nil
+}
+
+func (db *DB) getCurrentBlock() (Block, error) {
+	var block Block
+
+	currentBlockID, err := db.getCurrentBlockID()
+	if err != nil {
+		return block, err
+	}
+
+	block, err = db.getBlockByID(currentBlockID)
+	if err != nil {
+		return block, err
+	}
+
+	return block, nil
+}
+
+func (db *DB) startPause() (Pause, error) {
+  var newPause Pause
+
+	currentBlockID, err := db.getCurrentBlockID()
+	if err != nil {
+		return newPause, err
+	}
+	if currentBlockID == -1 {
+		return newPause, errors.New("no current block active")
+	}
+
+	currentPauseID, err := db.getCurrentPauseID()
+	if err != nil {
+		return newPause, err
+	}
+	if currentPauseID != -1 {
+		return newPause, errors.New("current pause already active")
+	}
+
+	pause := PauseCreate{
+		Start:   time.Now().Format(time.RFC3339),
+		BlockID: currentBlockID,
+	}
+	newPause, err = db.addPause(pause)
+	if err != nil {
+		return newPause, err
+	}
+
+	err = db.setCurrentPauseID(newPause.Id)
+	if err != nil {
+		return newPause, err
+	}
+
+	return newPause, nil
+}
+
+func (db *DB) endPause() (Pause, error) {
+	var pause Pause
+
+	currentPauseID, err := db.getCurrentPauseID()
+	if err != nil {
+		return pause, err
+	}
+	if currentPauseID == -1 {
+		return pause, errors.New("no current pause active")
+	}
+
+	q := `
+  UPDATE pause
+  SET end = ?
+  WHERE id = ?
+  `
+	end := time.Now().Format(time.RFC3339)
+	_, err = db.db.Exec(q, end, currentPauseID)
+	if err != nil {
+		return pause, err
+	}
+
+	pause, err = db.getPauseByID(currentPauseID)
+	if err != nil {
+		return pause, err
+	}
+
+	err = db.setCurrentPauseID(-1)
+	if err != nil {
+		return pause, err
+	}
+
+	return pause, nil
 }

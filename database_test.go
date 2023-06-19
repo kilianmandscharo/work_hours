@@ -6,6 +6,45 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestInitialCurrentIDs(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	currentBlockID, err := db.getCurrentBlockID()
+	assert.NoError(t, err)
+	assert.Equal(t, -1, currentBlockID)
+
+	currentPauseID, err := db.getCurrentPauseID()
+	assert.NoError(t, err)
+	assert.Equal(t, -1, currentPauseID)
+}
+
+func TestSetCurrentBlockID(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	testID := 10
+
+	err := db.setCurrentBlockID(testID)
+	assert.NoError(t, err)
+	currentBlockID, err := db.getCurrentBlockID()
+	assert.NoError(t, err)
+	assert.Equal(t, testID, currentBlockID)
+}
+
+func TestSetCurrentPauseID(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	testID := 10
+
+	err := db.setCurrentPauseID(testID)
+	assert.NoError(t, err)
+	currentPauseID, err := db.getCurrentPauseID()
+	assert.NoError(t, err)
+	assert.Equal(t, testID, currentPauseID)
+}
+
 func TestPragma(t *testing.T) {
 	db := getNewTestDatabase()
 	defer db.close()
@@ -152,4 +191,111 @@ func TestUpdatePause(t *testing.T) {
 
 	p, err := db.getPauseByID(pID)
 	assertTestPauseUpdated(t, p)
+}
+
+func TestStartBlock(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	t.Run("start successful", func(t *testing.T) {
+		_, err := db.startBlock()
+		assert.NoError(t, err)
+		currentBlockID, err := db.getCurrentBlockID()
+		assert.NoError(t, err)
+		assert.NotEqual(t, -1, currentBlockID)
+	})
+
+	t.Run("block already active", func(t *testing.T) {
+		_, err := db.startBlock()
+		assert.Error(t, err)
+	})
+}
+
+func TestEndBlock(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	t.Run("no block active", func(t *testing.T) {
+		_, err := db.endBlock()
+		assert.Error(t, err)
+	})
+
+	t.Run("end successful", func(t *testing.T) {
+		newBlock, err := db.startBlock()
+		assert.NoError(t, err)
+		block, err := db.endBlock()
+		assert.NoError(t, err)
+		assert.Equal(t, newBlock.Id, block.Id)
+		assert.Equal(t, newBlock.Start, block.Start)
+		currentBlockID, err := db.getCurrentBlockID()
+		assert.NoError(t, err)
+		assert.Equal(t, -1, currentBlockID)
+	})
+}
+
+func TestStartPause(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	t.Run("no block active", func(t *testing.T) {
+		_, err := db.startPause()
+		assert.Error(t, err)
+	})
+
+	t.Run("start successful", func(t *testing.T) {
+		_, err := db.startBlock()
+		assert.NoError(t, err)
+		_, err = db.startPause()
+		assert.NoError(t, err)
+		currentPauseID, err := db.getCurrentPauseID()
+		assert.NoError(t, err)
+		assert.NotEqual(t, -1, currentPauseID)
+	})
+
+	t.Run("pause already active", func(t *testing.T) {
+		_, err := db.startPause()
+		assert.Error(t, err)
+	})
+}
+
+func TestEndPause(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	t.Run("no pause active", func(t *testing.T) {
+		_, err := db.startBlock()
+		assert.NoError(t, err)
+		_, err = db.endPause()
+		assert.Error(t, err)
+	})
+
+	t.Run("end successful", func(t *testing.T) {
+		_, err := db.startPause()
+		assert.NoError(t, err)
+		_, err = db.endPause()
+		assert.NoError(t, err)
+		currentPauseID, err := db.getCurrentPauseID()
+		assert.NoError(t, err)
+		assert.Equal(t, -1, currentPauseID)
+	})
+
+}
+
+func TestGetCurrentBlock(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	t.Run("no block active", func(t *testing.T) {
+		_, err := db.getCurrentBlock()
+		assert.Error(t, err)
+	})
+
+	t.Run("get successful", func(t *testing.T) {
+		newBlock, err := db.startBlock()
+		assert.NoError(t, err)
+		block, err := db.getCurrentBlock()
+		assert.NoError(t, err)
+		assert.Equal(t, newBlock.Id, block.Id)
+		assert.Equal(t, newBlock.Start, block.Start)
+	})
 }

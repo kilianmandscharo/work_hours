@@ -465,10 +465,8 @@ func TestRefreshRoute(t *testing.T) {
 	defer db.close()
 	r := newRouter(db)
 	gin.SetMode(gin.TestMode)
-	// envTest, err := envTestVariables()
-	// assert.NoError(t, err)
 
-	t.Run("invalid body", func(t *testing.T) {
+	t.Run("token still valid", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodPost, "/refresh", nil)
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))

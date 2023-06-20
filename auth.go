@@ -16,10 +16,6 @@ type Login struct {
 	Password string `json:"password"`
 }
 
-type Refresh struct {
-	Token string `json:"token"`
-}
-
 func hashPassword(pw string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
 	return string(bytes), err

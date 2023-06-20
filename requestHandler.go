@@ -208,9 +208,10 @@ func (r *RequestHandler) handleLogin(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleRefresh(c *gin.Context) {
-	var refresh Refresh
-	if err := c.BindJSON(&refresh); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "could not parse body"})
+	tokenString, err := extractBearerToken(c.GetHeader("Authorization"))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "could not extract token"})
+		return
 	}
 
 	env, err := envVariables()
@@ -218,8 +219,7 @@ func (r *RequestHandler) handleRefresh(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load .env file"})
 	}
 
-	claims := jwt.StandardClaims{}
-	tokenString := refresh.Token
+	claims := &jwt.StandardClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(env.tokenKey), nil
 	})

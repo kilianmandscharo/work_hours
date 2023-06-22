@@ -204,7 +204,7 @@ func (r *RequestHandler) handleLogin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.String(http.StatusOK, token)
 }
 
 func (r *RequestHandler) handleRefresh(c *gin.Context) {

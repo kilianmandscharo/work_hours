@@ -60,6 +60,7 @@ func authorizer() gin.HandlerFunc {
 			c.Next()
 			return
 		}
+
 		tokenString, err := extractBearerToken(c.GetHeader("Authorization"))
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "could not extract token"})

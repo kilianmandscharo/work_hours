@@ -195,8 +195,6 @@ func (r *RequestHandler) handleLogin(c *gin.Context) {
 		return
 	}
 
-	c.String(http.StatusOK, "authorized")
-
 	token, err := createToken(login.Email, env.tokenKey)
 
 	if err != nil {
@@ -248,5 +246,5 @@ func (r *RequestHandler) handleRefresh(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": newToken})
+	c.String(http.StatusOK, newToken)
 }

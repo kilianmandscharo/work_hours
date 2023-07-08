@@ -304,7 +304,19 @@ func TestEndBlockRoute(t *testing.T) {
 	r := newRouter(db)
 	gin.SetMode(gin.TestMode)
 
-	t.Run("invalid request", func(t *testing.T) {
+	t.Run("block not started", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodPost, "/block_end", nil)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("pause still active", func(t *testing.T) {
+		_, err := db.startBlock()
+		assert.NoError(t, err)
+		_, err = db.startPause()
+		assert.NoError(t, err)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodPost, "/block_end", nil)
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
@@ -313,7 +325,7 @@ func TestEndBlockRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		_, err := db.startBlock()
+		_, err := db.endPause()
 		assert.NoError(t, err)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodPost, "/block_end", nil)

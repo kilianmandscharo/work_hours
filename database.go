@@ -398,6 +398,14 @@ func (db *DB) endBlock() (Block, error) {
 		return block, errors.New("no current block active")
 	}
 
+	currentPauseID, err := db.getCurrentPauseID()
+	if err != nil {
+		return block, err
+	}
+	if currentPauseID != -1 {
+		return block, errors.New("pause not ended")
+	}
+
 	q := `
   UPDATE block
   SET end = ?
@@ -439,7 +447,7 @@ func (db *DB) getCurrentBlock() (Block, error) {
 }
 
 func (db *DB) startPause() (Pause, error) {
-  var newPause Pause
+	var newPause Pause
 
 	currentBlockID, err := db.getCurrentBlockID()
 	if err != nil {

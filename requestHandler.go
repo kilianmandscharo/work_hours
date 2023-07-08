@@ -72,6 +72,8 @@ func (r *RequestHandler) handleGetBlockByID(c *gin.Context) {
 func (r *RequestHandler) handleGetAllBlocks(c *gin.Context) {
 	if blocks, err := r.db.getAllBlocks(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get blocks"})
+	} else if len(blocks) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "no blocks available"})
 	} else {
 		c.JSON(http.StatusOK, blocks)
 	}

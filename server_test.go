@@ -148,12 +148,20 @@ func TestGetBlockByIDRoute(t *testing.T) {
 func TestGetAllBlocksRoute(t *testing.T) {
 	db := getNewTestDatabase()
 	defer db.close()
-	_, err := db.addBlock(testBlockCreate())
-	assert.NoError(t, err)
 	r := newRouter(db)
 	gin.SetMode(gin.TestMode)
 
+	t.Run("no blocks available", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodGet, "/block", nil)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
 	t.Run("blocks found", func(t *testing.T) {
+		_, err := db.addBlock(testBlockCreate())
+		assert.NoError(t, err)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodGet, "/block", nil)
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))

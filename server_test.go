@@ -281,17 +281,25 @@ func TestStartBlockRoute(t *testing.T) {
 	r := newRouter(db)
 	gin.SetMode(gin.TestMode)
 
+	t.Run("invalid query parameter", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodPost, "/block_start?homeoffice=bad_param", nil)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
 	t.Run("valid request", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest(http.MethodPost, "/block_start", nil)
+		req, _ := http.NewRequest(http.MethodPost, "/block_start?homeoffice=false", nil)
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 		r.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusOK, w.Code)
 	})
 
-	t.Run("invalid request", func(t *testing.T) {
+	t.Run("block already active", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest(http.MethodPost, "/block_start", nil)
+		req, _ := http.NewRequest(http.MethodPost, "/block_start?homeoffice=false", nil)
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 		r.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
@@ -313,7 +321,7 @@ func TestEndBlockRoute(t *testing.T) {
 	})
 
 	t.Run("pause still active", func(t *testing.T) {
-		_, err := db.startBlock()
+		_, err := db.startBlock(false)
 		assert.NoError(t, err)
 		_, err = db.startPause()
 		assert.NoError(t, err)
@@ -350,7 +358,7 @@ func TestStartPauseRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		_, err := db.startBlock()
+		_, err := db.startBlock(false)
 		assert.NoError(t, err)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodPost, "/pause_start", nil)
@@ -383,7 +391,7 @@ func TestEndPauseRoute(t *testing.T) {
 	})
 
 	t.Run("invalid request no active pause", func(t *testing.T) {
-		_, err := db.startBlock()
+		_, err := db.startBlock(false)
 		assert.NoError(t, err)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodPost, "/pause_end", nil)
@@ -418,7 +426,7 @@ func TestGetCurrentBlockRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		_, err := db.startBlock()
+		_, err := db.startBlock(false)
 		assert.NoError(t, err)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodGet, "/block_current", nil)

@@ -118,7 +118,12 @@ func (r *RequestHandler) handleDeletePause(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleStartBlock(c *gin.Context) {
-	if block, err := r.db.startBlock(); err != nil {
+	homeoffice, err := strconv.ParseBool(c.Query("homeoffice"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
+		return
+	}
+	if block, err := r.db.startBlock(homeoffice); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not start block"})
 	} else {
 		c.JSON(http.StatusOK, block)

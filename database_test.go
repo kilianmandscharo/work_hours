@@ -198,7 +198,7 @@ func TestStartBlock(t *testing.T) {
 	defer db.close()
 
 	t.Run("start successful", func(t *testing.T) {
-		_, err := db.startBlock()
+		_, err := db.startBlock(false)
 		assert.NoError(t, err)
 		currentBlockID, err := db.getCurrentBlockID()
 		assert.NoError(t, err)
@@ -206,7 +206,7 @@ func TestStartBlock(t *testing.T) {
 	})
 
 	t.Run("block already active", func(t *testing.T) {
-		_, err := db.startBlock()
+		_, err := db.startBlock(false)
 		assert.Error(t, err)
 	})
 }
@@ -221,7 +221,7 @@ func TestEndBlock(t *testing.T) {
 	})
 
 	t.Run("end successful", func(t *testing.T) {
-		newBlock, err := db.startBlock()
+		newBlock, err := db.startBlock(false)
 		assert.NoError(t, err)
 		block, err := db.endBlock()
 		assert.NoError(t, err)
@@ -243,7 +243,7 @@ func TestStartPause(t *testing.T) {
 	})
 
 	t.Run("start successful", func(t *testing.T) {
-		_, err := db.startBlock()
+		_, err := db.startBlock(false)
 		assert.NoError(t, err)
 		_, err = db.startPause()
 		assert.NoError(t, err)
@@ -263,7 +263,7 @@ func TestEndPause(t *testing.T) {
 	defer db.close()
 
 	t.Run("no pause active", func(t *testing.T) {
-		_, err := db.startBlock()
+		_, err := db.startBlock(false)
 		assert.NoError(t, err)
 		_, err = db.endPause()
 		assert.Error(t, err)
@@ -291,7 +291,7 @@ func TestGetCurrentBlock(t *testing.T) {
 	})
 
 	t.Run("get successful", func(t *testing.T) {
-		newBlock, err := db.startBlock()
+		newBlock, err := db.startBlock(false)
 		assert.NoError(t, err)
 		block, err := db.getCurrentBlock()
 		assert.NoError(t, err)

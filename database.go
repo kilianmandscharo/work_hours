@@ -50,7 +50,8 @@ func (db *DB) init() error {
   CREATE TABLE IF NOT EXISTS block
   (id INTEGER PRIMARY KEY ASC,
   start TEXT,
-  end TEXT)
+  end TEXT,
+  homeoffice INTEGER)
   `
 	_, err := db.db.Exec(q)
 	if err != nil {
@@ -80,7 +81,6 @@ func (db *DB) init() error {
 		return err
 	}
 
-	//_, err = db.db.Exec("INSERT OR IGNORE INTO ui (id, list_order) VALUES(1, '')")
 	q = `
   INSERT OR IGNORE INTO current (id, current_block_id, current_pause_id)
   VALUES (1, -1, -1)
@@ -114,7 +114,7 @@ func (db *DB) getAllBlocks() ([]Block, error) {
 	var blocks []Block
 	for rows.Next() {
 		var b Block
-		err = rows.Scan(&b.Id, &b.Start, &b.End)
+		err = rows.Scan(&b.Id, &b.Start, &b.End, &b.Homeoffice)
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +163,7 @@ func (db *DB) getBlockByID(id int) (Block, error) {
   `
 	row := db.db.QueryRow(q, id)
 	var b Block
-	if err := row.Scan(&b.Id, &b.Start, &b.End); err != nil {
+	if err := row.Scan(&b.Id, &b.Start, &b.End, &b.Homeoffice); err != nil {
 		return b, err
 	}
 	pauses, err := db.getPausesByBlockID(b.Id)
@@ -190,10 +190,10 @@ func (db *DB) getPauseByID(id int) (Pause, error) {
 func (db *DB) addBlock(block BlockCreate) (Block, error) {
 	var newBlock Block
 	q := `
-  INSERT INTO block (start, end)
-  VALUES (?, ?)
+  INSERT INTO block (start, end, homeoffice)
+  VALUES (?, ?, ?)
   `
-	result, err := db.db.Exec(q, block.Start, block.End)
+	result, err := db.db.Exec(q, block.Start, block.End, block.Homeoffice)
 	if err != nil {
 		return newBlock, err
 	}
@@ -271,10 +271,10 @@ func (db *DB) deletePause(id int) error {
 func (db *DB) updateBlock(block Block) error {
 	q := `
   UPDATE block
-  SET start = ?, end = ?
+  SET start = ?, end = ?, homeoffice = ?
   WHERE id = ?
   `
-	_, err := db.db.Exec(q, block.Start, block.End, block.Id)
+	_, err := db.db.Exec(q, block.Start, block.End, block.Id, block.Homeoffice)
 	if err != nil {
 		return err
 	}
@@ -360,7 +360,7 @@ func (db *DB) setCurrentPauseID(id int) error {
 	return nil
 }
 
-func (db *DB) startBlock() (Block, error) {
+func (db *DB) startBlock(homeoffice bool) (Block, error) {
 	var newBlock Block
 
 	currentBlockID, err := db.getCurrentBlockID()
@@ -372,7 +372,8 @@ func (db *DB) startBlock() (Block, error) {
 	}
 
 	block := BlockCreate{
-		Start: time.Now().Format(time.RFC3339),
+		Start:      time.Now().Format(time.RFC3339),
+		Homeoffice: homeoffice,
 	}
 	newBlock, err = db.addBlock(block)
 	if err != nil {

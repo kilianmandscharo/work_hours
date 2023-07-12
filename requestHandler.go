@@ -49,10 +49,14 @@ func (r *RequestHandler) handleDeleteBlock(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
 		return
 	}
-	if err := r.db.deleteBlock(id); err != nil {
+	if rowsAffected, err := r.db.deleteBlock(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete block"})
 	} else {
-		c.Status(http.StatusOK)
+		if rowsAffected == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "block not found"})
+		} else {
+			c.Status(http.StatusOK)
+		}
 	}
 }
 

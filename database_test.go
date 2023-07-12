@@ -144,11 +144,16 @@ func TestDeleteBlock(t *testing.T) {
 	db := getNewTestDatabase()
 	defer db.close()
 
+	rowsAffected, err := db.deleteBlock(bID)
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 0)
+
 	db.addBlock(testBlockCreate())
 
-	err := db.deleteBlock(bID)
+	rowsAffected, err = db.deleteBlock(bID)
 	assert.NoError(t, err)
 	_, err = db.getPauseByID(pID)
+	assert.Equal(t, rowsAffected, 1)
 	assert.Error(t, err)
 	_, err = db.getBlockByID(bID)
 	assert.Error(t, err)

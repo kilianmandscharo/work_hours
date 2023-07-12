@@ -244,16 +244,22 @@ func (db *DB) addPause(pause PauseCreate) (Pause, error) {
 	return newPause, nil
 }
 
-func (db *DB) deleteBlock(id int) error {
+func (db *DB) deleteBlock(id int) (int, error) {
 	q := `
   DELETE FROM block
   WHERE id = ?
   `
-	_, err := db.db.Exec(q, id)
+	result, err := db.db.Exec(q, id)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsAffected), err
 }
 
 func (db *DB) deletePause(id int) error {

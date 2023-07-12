@@ -159,6 +159,27 @@ func TestDeleteBlock(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestDeleteCurrentBlock(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	_, err := db.startBlock(false)
+	assert.NoError(t, err)
+	_, err = db.startPause()
+	assert.NoError(t, err)
+
+	rowsAffected, err := db.deleteBlock(bID)
+	assert.Equal(t, rowsAffected, 1)
+
+	currentBlockID, err := db.getCurrentBlockID()
+	assert.NoError(t, err)
+	assert.Equal(t, currentBlockID, -1)
+
+	currentPauseID, err := db.getCurrentPauseID()
+	assert.NoError(t, err)
+	assert.Equal(t, currentPauseID, -1)
+}
+
 func TestDeletePause(t *testing.T) {
 	db := getNewTestDatabase()
 	defer db.close()

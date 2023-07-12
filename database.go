@@ -249,6 +249,22 @@ func (db *DB) deleteBlock(id int) (int, error) {
   DELETE FROM block
   WHERE id = ?
   `
+	currentBlockID, err := db.getCurrentBlockID()
+	if err != nil {
+		return 0, err
+	}
+	if id == currentBlockID {
+		err := db.setCurrentBlockID(-1)
+		if err != nil {
+			return 0, err
+		}
+
+		err = db.setCurrentPauseID(-1)
+		if err != nil {
+			return 0, err
+		}
+	}
+
 	result, err := db.db.Exec(q, id)
 	if err != nil {
 		return 0, err

@@ -114,10 +114,14 @@ func (r *RequestHandler) handleDeletePause(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
 		return
 	}
-	if err := r.db.deletePause(id); err != nil {
+	if rowsAffected, err := r.db.deletePause(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete pause"})
 	} else {
-		c.Status(http.StatusOK)
+		if rowsAffected == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "pause not found"})
+		} else {
+			c.Status(http.StatusOK)
+		}
 	}
 }
 

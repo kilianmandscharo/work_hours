@@ -245,10 +245,6 @@ func (db *DB) addPause(pause PauseCreate) (Pause, error) {
 }
 
 func (db *DB) deleteBlock(id int) (int, error) {
-	q := `
-  DELETE FROM block
-  WHERE id = ?
-  `
 	currentBlockID, err := db.getCurrentBlockID()
 	if err != nil {
 		return 0, err
@@ -265,6 +261,11 @@ func (db *DB) deleteBlock(id int) (int, error) {
 		}
 	}
 
+	q := `
+  DELETE FROM block
+  WHERE id = ?
+  `
+
 	result, err := db.db.Exec(q, id)
 	if err != nil {
 		return 0, err
@@ -278,16 +279,33 @@ func (db *DB) deleteBlock(id int) (int, error) {
 	return int(rowsAffected), err
 }
 
-func (db *DB) deletePause(id int) error {
+func (db *DB) deletePause(id int) (int, error) {
+	currentPauseID, err := db.getCurrentPauseID()
+	if err != nil {
+		return 0, err
+	}
+	if currentPauseID == id {
+		err := db.setCurrentPauseID(-1)
+		if err != nil {
+			return 0, err
+		}
+	}
+
 	q := `
   DELETE FROM pause
   WHERE id = ?
   `
-	_, err := db.db.Exec(q, id)
+	result, err := db.db.Exec(q, id)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsAffected), err
 }
 
 func (db *DB) updateBlock(block Block) error {

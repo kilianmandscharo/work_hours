@@ -152,8 +152,8 @@ func TestDeleteBlock(t *testing.T) {
 
 	rowsAffected, err = db.deleteBlock(bID)
 	assert.NoError(t, err)
-	_, err = db.getPauseByID(pID)
 	assert.Equal(t, rowsAffected, 1)
+	_, err = db.getPauseByID(pID)
 	assert.Error(t, err)
 	_, err = db.getBlockByID(bID)
 	assert.Error(t, err)
@@ -184,12 +184,34 @@ func TestDeletePause(t *testing.T) {
 	db := getNewTestDatabase()
 	defer db.close()
 
+	rowsAffected, err := db.deletePause(pID)
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 0)
+
 	db.addBlock(testBlockCreate())
 
-	err := db.deletePause(pID)
+	rowsAffected, err = db.deletePause(pID)
 	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 1)
 	_, err = db.getPauseByID(pID)
 	assert.Error(t, err)
+}
+
+func TestDeleteCurrentPause(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	_, err := db.startBlock(false)
+	assert.NoError(t, err)
+	_, err = db.startPause()
+	assert.NoError(t, err)
+
+	rowsAffected, err := db.deletePause(pID)
+	assert.Equal(t, rowsAffected, 1)
+
+	currentPauseID, err := db.getCurrentPauseID()
+	assert.NoError(t, err)
+	assert.Equal(t, currentPauseID, -1)
 }
 
 func TestUpdateBlock(t *testing.T) {

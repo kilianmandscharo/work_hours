@@ -276,7 +276,17 @@ func TestDeletePauseRoute(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 
+	t.Run("pause not found", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodDelete, "/pause/12", nil)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
 	t.Run("valid request", func(t *testing.T) {
+		_, err := db.addBlock(testBlockCreate())
+		assert.NoError(t, err)
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("/pause/%d", pID), nil)
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))

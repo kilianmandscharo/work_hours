@@ -228,6 +228,63 @@ func TestUpdateBlock(t *testing.T) {
 	assertTestBlockUpdated(t, b)
 }
 
+func TestUpdateBlockStart(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	rowsAffected, err := db.updateBlockStart(10, "test")
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 0)
+
+	db.addBlock(testBlockCreate())
+
+	rowsAffected, err = db.updateBlockStart(bID, bStartUpdated)
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 1)
+
+	block, err := db.getBlockByID(bID)
+	assert.NoError(t, err)
+	assert.Equal(t, block.Start, bStartUpdated)
+}
+
+func TestUpdateBlockEnd(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	rowsAffected, err := db.updateBlockEnd(10, "test")
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 0)
+
+	db.addBlock(testBlockCreate())
+
+	rowsAffected, err = db.updateBlockEnd(bID, bEndUpdated)
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 1)
+
+	block, err := db.getBlockByID(bID)
+	assert.NoError(t, err)
+	assert.Equal(t, block.End, bEndUpdated)
+}
+
+func TestUpdateBlockHomeoffice(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	rowsAffected, err := db.updateBlockHomeoffice(10, true)
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 0)
+
+	db.addBlock(testBlockCreate())
+
+	rowsAffected, err = db.updateBlockHomeoffice(bID, bHomeofficeUpdated)
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 1)
+
+	block, err := db.getBlockByID(bID)
+	assert.NoError(t, err)
+	assert.Equal(t, block.Homeoffice, bHomeofficeUpdated)
+}
+
 func TestUpdatePause(t *testing.T) {
 	db := getNewTestDatabase()
 	defer db.close()
@@ -239,6 +296,44 @@ func TestUpdatePause(t *testing.T) {
 
 	p, err := db.getPauseByID(pID)
 	assertTestPauseUpdated(t, p)
+}
+
+func TestUpdatePauseStart(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	rowsAffected, err := db.updatePauseStart(10, "test")
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 0)
+
+	db.addBlock(testBlockCreate())
+
+	rowsAffected, err = db.updatePauseStart(bID, pStartUpdated)
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 1)
+
+	pause, err := db.getPauseByID(bID)
+	assert.NoError(t, err)
+	assert.Equal(t, pause.Start, pStartUpdated)
+}
+
+func TestUpdatePauseEnd(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+
+	rowsAffected, err := db.updatePauseEnd(10, "test")
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 0)
+
+	db.addBlock(testBlockCreate())
+
+	rowsAffected, err = db.updatePauseEnd(bID, pEndUpdated)
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 1)
+
+	pause, err := db.getPauseByID(bID)
+	assert.NoError(t, err)
+	assert.Equal(t, pause.End, pEndUpdated)
 }
 
 func TestStartBlock(t *testing.T) {

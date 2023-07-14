@@ -314,11 +314,68 @@ func (db *DB) updateBlock(block Block) error {
   SET start = ?, end = ?, homeoffice = ?
   WHERE id = ?
   `
-	_, err := db.db.Exec(q, block.Start, block.End, block.Id, block.Homeoffice)
+	_, err := db.db.Exec(q, block.Start, block.End, block.Homeoffice, block.Id)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (db *DB) updateBlockStart(id int, start string) (int, error) {
+	q := `
+  UPDATE block
+  SET start = ?
+  WHERE id = ?
+  `
+	result, err := db.db.Exec(q, start, id)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsAffected), nil
+}
+
+func (db *DB) updateBlockEnd(id int, end string) (int, error) {
+	q := `
+  UPDATE block
+  SET end = ?
+  WHERE id = ?
+  `
+	result, err := db.db.Exec(q, end, id)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsAffected), nil
+}
+
+func (db *DB) updateBlockHomeoffice(id int, homeoffice bool) (int, error) {
+	q := `
+  UPDATE block
+  SET homeoffice = ?
+  WHERE id = ?
+  `
+	result, err := db.db.Exec(q, homeoffice, id)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsAffected), nil
 }
 
 func (db *DB) updatePause(pause Pause) error {
@@ -332,6 +389,44 @@ func (db *DB) updatePause(pause Pause) error {
 		return err
 	}
 	return nil
+}
+
+func (db *DB) updatePauseStart(id int, start string) (int, error) {
+	q := `
+  UPDATE pause
+  SET start = ?
+  WHERE id = ?
+  `
+	result, err := db.db.Exec(q, start, id)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsAffected), nil
+}
+
+func (db *DB) updatePauseEnd(id int, end string) (int, error) {
+	q := `
+  UPDATE pause
+  SET end = ?
+  WHERE id = ?
+  `
+	result, err := db.db.Exec(q, end, id)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsAffected), nil
 }
 
 func (db *DB) getCurrentBlockID() (int, error) {

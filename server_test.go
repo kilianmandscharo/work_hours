@@ -85,6 +85,241 @@ func TestUpdateBlockRoute(t *testing.T) {
 	})
 }
 
+func TestUpdateBlockStartRoute(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+	r := newRouter(db)
+	gin.SetMode(gin.TestMode)
+
+	t.Run("bad request", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodPut, "/block_start/a", nil)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		type Body struct {
+			start string
+		}
+		body := Body{start: "test"}
+		bodyBytes, err := json.Marshal(body)
+		assert.NoError(t, err)
+		bodyReader := bytes.NewReader(bodyBytes)
+		req, _ := http.NewRequest(http.MethodPut, "/block_start/12", bodyReader)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("valid body", func(t *testing.T) {
+		_, err := db.addBlock(testBlockCreate())
+		assert.NoError(t, err)
+		w := httptest.NewRecorder()
+		type Body struct {
+			start string
+		}
+		body := Body{start: "test"}
+		bodyBytes, err := json.Marshal(body)
+		assert.NoError(t, err)
+		bodyReader := bytes.NewReader(bodyBytes)
+		req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("/block_start/%d", bID), bodyReader)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestUpdateBlockEndRoute(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+	r := newRouter(db)
+	gin.SetMode(gin.TestMode)
+
+	t.Run("bad request", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodPut, "/block_end/a", nil)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		type Body struct {
+			end string
+		}
+		body := Body{end: "test"}
+		bodyBytes, err := json.Marshal(body)
+		assert.NoError(t, err)
+		bodyReader := bytes.NewReader(bodyBytes)
+		req, _ := http.NewRequest(http.MethodPut, "/block_end/12", bodyReader)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("valid body", func(t *testing.T) {
+		_, err := db.addBlock(testBlockCreate())
+		assert.NoError(t, err)
+		w := httptest.NewRecorder()
+		type Body struct {
+			end string
+		}
+		body := Body{end: "test"}
+		bodyBytes, err := json.Marshal(body)
+		assert.NoError(t, err)
+		bodyReader := bytes.NewReader(bodyBytes)
+		req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("/block_end/%d", bID), bodyReader)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestUpdateBlockHomeofficeRoute(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+	r := newRouter(db)
+	gin.SetMode(gin.TestMode)
+
+	t.Run("bad request", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodPut, "/block_homeoffice/a", nil)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		type Body struct {
+			homeoffice string
+		}
+		body := Body{homeoffice: "test"}
+		bodyBytes, err := json.Marshal(body)
+		assert.NoError(t, err)
+		bodyReader := bytes.NewReader(bodyBytes)
+		req, _ := http.NewRequest(http.MethodPut, "/block_homeoffice/12", bodyReader)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("valid body", func(t *testing.T) {
+		_, err := db.addBlock(testBlockCreate())
+		assert.NoError(t, err)
+		w := httptest.NewRecorder()
+		type Body struct {
+			homeoffice string
+		}
+		body := Body{homeoffice: "test"}
+		bodyBytes, err := json.Marshal(body)
+		assert.NoError(t, err)
+		bodyReader := bytes.NewReader(bodyBytes)
+		req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("/block_homeoffice/%d", bID), bodyReader)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestUpdatePauseStartRoute(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+	r := newRouter(db)
+	gin.SetMode(gin.TestMode)
+
+	t.Run("bad request", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodPut, "/pause_start/a", nil)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		type Body struct {
+			start string
+		}
+		body := Body{start: "test"}
+		bodyBytes, err := json.Marshal(body)
+		assert.NoError(t, err)
+		bodyReader := bytes.NewReader(bodyBytes)
+		req, _ := http.NewRequest(http.MethodPut, "/pause_start/12", bodyReader)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("valid body", func(t *testing.T) {
+		_, err := db.addBlock(testBlockCreate())
+		assert.NoError(t, err)
+		w := httptest.NewRecorder()
+		type Body struct {
+			start string
+		}
+		body := Body{start: "test"}
+		bodyBytes, err := json.Marshal(body)
+		assert.NoError(t, err)
+		bodyReader := bytes.NewReader(bodyBytes)
+		req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("/pause_start/%d", bID), bodyReader)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
+func TestUpdatePauseEndRoute(t *testing.T) {
+	db := getNewTestDatabase()
+	defer db.close()
+	r := newRouter(db)
+	gin.SetMode(gin.TestMode)
+
+	t.Run("bad request", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodPut, "/pause_end/a", nil)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		type Body struct {
+			end string
+		}
+		body := Body{end: "test"}
+		bodyBytes, err := json.Marshal(body)
+		assert.NoError(t, err)
+		bodyReader := bytes.NewReader(bodyBytes)
+		req, _ := http.NewRequest(http.MethodPut, "/pause_end/12", bodyReader)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("valid body", func(t *testing.T) {
+		_, err := db.addBlock(testBlockCreate())
+		assert.NoError(t, err)
+		w := httptest.NewRecorder()
+		type Body struct {
+			end string
+		}
+		body := Body{end: "test"}
+		bodyBytes, err := json.Marshal(body)
+		assert.NoError(t, err)
+		bodyReader := bytes.NewReader(bodyBytes)
+		req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("/pause_end/%d", bID), bodyReader)
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+}
+
 func TestDeleteBlockRoute(t *testing.T) {
 	db := getNewTestDatabase()
 	defer db.close()

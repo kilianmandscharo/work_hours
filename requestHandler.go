@@ -43,6 +43,87 @@ func (r *RequestHandler) handleUpdateBlock(c *gin.Context) {
 	}
 }
 
+func (r *RequestHandler) handleUpdateBlockStart(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
+		return
+	}
+
+	type Body struct {
+		start string
+	}
+	var body Body
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
+		return
+	}
+
+	if rowsAffected, err := r.db.updateBlockStart(id, body.start); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
+	} else {
+		if rowsAffected == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "block not found"})
+		} else {
+			c.Status(http.StatusOK)
+		}
+	}
+}
+
+func (r *RequestHandler) handleUpdateBlockEnd(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
+		return
+	}
+
+	type Body struct {
+		end string
+	}
+	var body Body
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
+		return
+	}
+
+	if rowsAffected, err := r.db.updateBlockEnd(id, body.end); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
+	} else {
+		if rowsAffected == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "block not found"})
+		} else {
+			c.Status(http.StatusOK)
+		}
+	}
+}
+
+func (r *RequestHandler) handleUpdateBlockHomeoffice(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
+		return
+	}
+
+	type Body struct {
+		homeoffice bool
+	}
+	var body Body
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
+		return
+	}
+
+	if rowsAffected, err := r.db.updateBlockHomeoffice(id, body.homeoffice); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
+	} else {
+		if rowsAffected == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "block not found"})
+		} else {
+			c.Status(http.StatusOK)
+		}
+	}
+}
+
 func (r *RequestHandler) handleDeleteBlock(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -105,6 +186,60 @@ func (r *RequestHandler) handleUpdatePause(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
 	} else {
 		c.Status(http.StatusOK)
+	}
+}
+
+func (r *RequestHandler) handleUpdatePauseStart(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
+		return
+	}
+
+	type Body struct {
+		start string
+	}
+	var body Body
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
+		return
+	}
+
+	if rowsAffected, err := r.db.updatePauseStart(id, body.start); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
+	} else {
+		if rowsAffected == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "pause not found"})
+		} else {
+			c.Status(http.StatusOK)
+		}
+	}
+}
+
+func (r *RequestHandler) handleUpdatePauseEnd(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
+		return
+	}
+
+	type Body struct {
+		end string
+	}
+	var body Body
+	if err := c.BindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
+		return
+	}
+
+	if rowsAffected, err := r.db.updatePauseEnd(id, body.end); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
+	} else {
+		if rowsAffected == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "pause not found"})
+		} else {
+			c.Status(http.StatusOK)
+		}
 	}
 }
 

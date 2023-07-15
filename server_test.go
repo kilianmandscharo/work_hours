@@ -50,6 +50,32 @@ func TestAddBlockRoute(t *testing.T) {
 			http.StatusBadRequest)
 	})
 
+	t.Run("invalid block start time", func(t *testing.T) {
+		block := testBlockCreate()
+		block.Start = "invalid start"
+		assertRequestWithBody(
+			t,
+			r,
+			token,
+			http.MethodPost,
+			"/block",
+			block,
+			http.StatusBadRequest)
+	})
+
+	t.Run("invalid pause start time", func(t *testing.T) {
+		block := testBlockCreate()
+		block.Pauses[0].Start = "invalid start"
+		assertRequestWithBody(
+			t,
+			r,
+			token,
+			http.MethodPost,
+			"/block",
+			block,
+			http.StatusBadRequest)
+	})
+
 	t.Run("valid body", func(t *testing.T) {
 		assertRequestWithBody(
 			t,
@@ -75,6 +101,43 @@ func TestUpdateBlockRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			"/block",
+			http.StatusBadRequest)
+	})
+
+	t.Run("invalid body", func(t *testing.T) {
+		assertRequestWithBody(
+			t,
+			r,
+			token,
+			http.MethodPut,
+			"/block",
+			struct{ Invalid string }{Invalid: "test"},
+			http.StatusBadRequest)
+	})
+
+	t.Run("invalid block start time", func(t *testing.T) {
+		block := testBlockCreate()
+		block.Start = "invalid start"
+		assertRequestWithBody(
+			t,
+			r,
+			token,
+			http.MethodPost,
+			"/block",
+			block,
+			http.StatusBadRequest)
+	})
+
+	t.Run("invalid pause start time", func(t *testing.T) {
+		block := testBlockCreate()
+		block.Pauses[0].Start = "invalid start"
+		assertRequestWithBody(
+			t,
+			r,
+			token,
+			http.MethodPost,
+			"/block",
+			block,
 			http.StatusBadRequest)
 	})
 
@@ -120,6 +183,16 @@ func TestUpdateBlockStartRoute(t *testing.T) {
 			http.StatusBadRequest)
 	})
 
+	t.Run("no body", func(t *testing.T) {
+		assertRequest(
+			t,
+			r,
+			token,
+			http.MethodPut,
+			"/block_start/1",
+			http.StatusBadRequest)
+	})
+
 	t.Run("invalid body", func(t *testing.T) {
 		assertRequestWithBody(
 			t,
@@ -127,7 +200,18 @@ func TestUpdateBlockStartRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			"/block_start/1",
-			BodyEnd{End: "test"},
+			struct{ Invalid string }{Invalid: "test"},
+			http.StatusBadRequest)
+	})
+
+	t.Run("invalid start time", func(t *testing.T) {
+		assertRequestWithBody(
+			t,
+			r,
+			token,
+			http.MethodPut,
+			fmt.Sprintf("/block_start/%d", bID),
+			BodyStart{Start: "invalid start"},
 			http.StatusBadRequest)
 	})
 
@@ -138,7 +222,7 @@ func TestUpdateBlockStartRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			"/block_start/12",
-			BodyStart{Start: "test"},
+			BodyStart{Start: bStartUpdated},
 			http.StatusNotFound)
 	})
 
@@ -150,7 +234,7 @@ func TestUpdateBlockStartRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			fmt.Sprintf("/block_start/%d", bID),
-			BodyStart{Start: "test"},
+			BodyStart{Start: bStartUpdated},
 			http.StatusOK)
 	})
 }
@@ -171,6 +255,16 @@ func TestUpdateBlockEndRoute(t *testing.T) {
 			http.StatusBadRequest)
 	})
 
+	t.Run("no body", func(t *testing.T) {
+		assertRequest(
+			t,
+			r,
+			token,
+			http.MethodPut,
+			"/block_end/1",
+			http.StatusBadRequest)
+	})
+
 	t.Run("invalid body", func(t *testing.T) {
 		assertRequestWithBody(
 			t,
@@ -178,7 +272,18 @@ func TestUpdateBlockEndRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			"/block_end/1",
-			BodyStart{Start: "test"},
+			struct{ Invalid string }{Invalid: "test"},
+			http.StatusBadRequest)
+	})
+
+	t.Run("invalid end time", func(t *testing.T) {
+		assertRequestWithBody(
+			t,
+			r,
+			token,
+			http.MethodPut,
+			fmt.Sprintf("/block_start/%d", bID),
+			BodyEnd{End: "invalid end"},
 			http.StatusBadRequest)
 	})
 
@@ -189,7 +294,7 @@ func TestUpdateBlockEndRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			"/block_end/12",
-			BodyEnd{End: "test"},
+			BodyEnd{End: bEndUpdated},
 			http.StatusNotFound)
 	})
 
@@ -201,7 +306,7 @@ func TestUpdateBlockEndRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			fmt.Sprintf("/block_end/%d", bID),
-			BodyEnd{End: "test"},
+			BodyEnd{End: bEndUpdated},
 			http.StatusOK)
 	})
 }
@@ -222,6 +327,16 @@ func TestUpdateBlockHomeofficeRoute(t *testing.T) {
 			http.StatusBadRequest)
 	})
 
+	t.Run("no body", func(t *testing.T) {
+		assertRequest(
+			t,
+			r,
+			token,
+			http.MethodPut,
+			"/block_homeoffice/1",
+			http.StatusBadRequest)
+	})
+
 	t.Run("invalid body", func(t *testing.T) {
 		assertRequestWithBody(
 			t,
@@ -229,7 +344,7 @@ func TestUpdateBlockHomeofficeRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			"/block_homeoffice/1",
-			BodyStart{Start: "test"},
+			struct{ Invalid string }{Invalid: "test"},
 			http.StatusBadRequest)
 	})
 
@@ -273,6 +388,16 @@ func TestUpdatePauseStartRoute(t *testing.T) {
 			http.StatusBadRequest)
 	})
 
+	t.Run("no body", func(t *testing.T) {
+		assertRequest(
+			t,
+			r,
+			token,
+			http.MethodPut,
+			"/pause_start/1",
+			http.StatusBadRequest)
+	})
+
 	t.Run("invalid body", func(t *testing.T) {
 		assertRequestWithBody(
 			t,
@@ -280,7 +405,18 @@ func TestUpdatePauseStartRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			"/pause_start/1",
-			BodyEnd{End: "test"},
+			struct{ Invalid string }{Invalid: "test"},
+			http.StatusBadRequest)
+	})
+
+	t.Run("invalid start time", func(t *testing.T) {
+		assertRequestWithBody(
+			t,
+			r,
+			token,
+			http.MethodPut,
+			fmt.Sprintf("/pause_start/%d", pID),
+			BodyStart{Start: "invalid start"},
 			http.StatusBadRequest)
 	})
 
@@ -291,7 +427,7 @@ func TestUpdatePauseStartRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			"/pause_start/12",
-			BodyStart{Start: "test"},
+			BodyStart{Start: pStartUpdated},
 			http.StatusNotFound)
 	})
 
@@ -303,7 +439,7 @@ func TestUpdatePauseStartRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			fmt.Sprintf("/pause_start/%d", bID),
-			BodyStart{Start: "test"},
+			BodyStart{Start: pStartUpdated},
 			http.StatusOK)
 	})
 }
@@ -324,6 +460,16 @@ func TestUpdatePauseEndRoute(t *testing.T) {
 			http.StatusBadRequest)
 	})
 
+	t.Run("no body", func(t *testing.T) {
+		assertRequest(
+			t,
+			r,
+			token,
+			http.MethodPut,
+			"/pause_end/1",
+			http.StatusBadRequest)
+	})
+
 	t.Run("invalid body", func(t *testing.T) {
 		assertRequestWithBody(
 			t,
@@ -331,7 +477,18 @@ func TestUpdatePauseEndRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			"/pause_end/1",
-			BodyStart{Start: "test"},
+			struct{ Invalid string }{Invalid: "test"},
+			http.StatusBadRequest)
+	})
+
+	t.Run("invalid end time", func(t *testing.T) {
+		assertRequestWithBody(
+			t,
+			r,
+			token,
+			http.MethodPut,
+			fmt.Sprintf("/pause_end/%d", pID),
+			BodyEnd{End: "invalid end"},
 			http.StatusBadRequest)
 	})
 
@@ -342,7 +499,7 @@ func TestUpdatePauseEndRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			"/pause_end/12",
-			BodyEnd{End: "test"},
+			BodyEnd{End: pEndUpdated},
 			http.StatusNotFound)
 	})
 
@@ -354,7 +511,7 @@ func TestUpdatePauseEndRoute(t *testing.T) {
 			token,
 			http.MethodPut,
 			fmt.Sprintf("/pause_end/%d", bID),
-			BodyEnd{End: "test"},
+			BodyEnd{End: pEndUpdated},
 			http.StatusOK)
 	})
 }
@@ -779,6 +936,17 @@ func TestLoginRoute(t *testing.T) {
 			token,
 			http.MethodPost,
 			"/login",
+			http.StatusBadRequest)
+	})
+
+	t.Run("invalid body", func(t *testing.T) {
+		assertRequestWithBody(
+			t,
+			r,
+			token,
+			http.MethodPost,
+			"/login",
+			struct{ Invalid string }{Invalid: "test"},
 			http.StatusBadRequest)
 	})
 

@@ -23,6 +23,12 @@ func (r *RequestHandler) handleAddBlock(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
+
+	if !block.valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
+		return
+	}
+
 	if newBlock, err := r.db.addBlock(block); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not add block"})
 	} else {
@@ -36,6 +42,12 @@ func (r *RequestHandler) handleUpdateBlock(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
+
+	if !block.valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
+		return
+	}
+
 	if rowsAffected, err := r.db.updateBlock(block); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
 	} else {
@@ -60,6 +72,11 @@ func (r *RequestHandler) handleUpdateBlockStart(c *gin.Context) {
 		return
 	}
 
+	if !body.valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
+		return
+	}
+
 	if rowsAffected, err := r.db.updateBlockStart(id, body.Start); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
 	} else {
@@ -81,6 +98,11 @@ func (r *RequestHandler) handleUpdateBlockEnd(c *gin.Context) {
 	var body BodyEnd
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
+		return
+	}
+
+	if !body.valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
 		return
 	}
 
@@ -125,6 +147,7 @@ func (r *RequestHandler) handleDeleteBlock(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
 		return
 	}
+
 	if rowsAffected, err := r.db.deleteBlock(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete block"})
 	} else {
@@ -142,6 +165,7 @@ func (r *RequestHandler) handleGetBlockByID(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
 		return
 	}
+
 	if block, err := r.db.getBlockByID(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get block"})
 	} else {
@@ -164,6 +188,12 @@ func (r *RequestHandler) handleAddPause(c *gin.Context) {
 	if err := c.BindJSON(&pause); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 	}
+
+	if !pause.valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
+		return
+	}
+
 	if newPause, err := r.db.addPause(pause); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not add pause"})
 	} else {
@@ -177,6 +207,12 @@ func (r *RequestHandler) handleUpdatePause(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
+
+	if !pause.valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
+		return
+	}
+
 	if rowsAffected, err := r.db.updatePause(pause); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
 	} else {
@@ -198,6 +234,11 @@ func (r *RequestHandler) handleUpdatePauseStart(c *gin.Context) {
 	var body BodyStart
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
+		return
+	}
+
+	if !body.valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
 		return
 	}
 
@@ -225,6 +266,11 @@ func (r *RequestHandler) handleUpdatePauseEnd(c *gin.Context) {
 		return
 	}
 
+	if !body.valid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
+		return
+	}
+
 	if rowsAffected, err := r.db.updatePauseEnd(id, body.End); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
 	} else {
@@ -242,6 +288,7 @@ func (r *RequestHandler) handleDeletePause(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
 		return
 	}
+
 	if rowsAffected, err := r.db.deletePause(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete pause"})
 	} else {
@@ -259,6 +306,7 @@ func (r *RequestHandler) handleStartBlock(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read query parameter"})
 		return
 	}
+
 	if block, err := r.db.startBlock(homeoffice); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not start block"})
 	} else {

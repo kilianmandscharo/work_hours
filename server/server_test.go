@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -7,30 +7,34 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kilianmandscharo/work_hours/auth"
+	"github.com/kilianmandscharo/work_hours/database"
+	"github.com/kilianmandscharo/work_hours/models"
+	"github.com/kilianmandscharo/work_hours/utils"
 	"github.com/stretchr/testify/assert"
 )
 
 var token string
 
 func init() {
-	env, err := envVariables()
+	env, err := utils.EnvVariables()
 	if err != nil {
 		log.Fatal("could not load env file")
 	}
-	token, err = createToken(env.email, env.tokenKey)
+	token, err = auth.CreateToken(env.Email, env.TokenKey)
 	if err != nil {
 		log.Fatal("could not create token")
 	}
 }
 
 func TestAddBlockRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("no body", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -40,7 +44,7 @@ func TestAddBlockRoute(t *testing.T) {
 	})
 
 	t.Run("invalid body", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -51,9 +55,9 @@ func TestAddBlockRoute(t *testing.T) {
 	})
 
 	t.Run("invalid block start time", func(t *testing.T) {
-		block := testBlockCreate()
+		block := utils.TestBlockCreate()
 		block.Start = "invalid start"
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -64,9 +68,9 @@ func TestAddBlockRoute(t *testing.T) {
 	})
 
 	t.Run("invalid pause start time", func(t *testing.T) {
-		block := testBlockCreate()
+		block := utils.TestBlockCreate()
 		block.Pauses[0].Start = "invalid start"
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -77,25 +81,25 @@ func TestAddBlockRoute(t *testing.T) {
 	})
 
 	t.Run("valid body", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPost,
 			"/block",
-			testBlockCreate(),
+			utils.TestBlockCreate(),
 			http.StatusOK)
 	})
 }
 
 func TestUpdateBlockRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("no body", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -105,7 +109,7 @@ func TestUpdateBlockRoute(t *testing.T) {
 	})
 
 	t.Run("invalid body", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -116,9 +120,9 @@ func TestUpdateBlockRoute(t *testing.T) {
 	})
 
 	t.Run("invalid block start time", func(t *testing.T) {
-		block := testBlockCreate()
+		block := utils.TestBlockCreate()
 		block.Start = "invalid start"
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -129,9 +133,9 @@ func TestUpdateBlockRoute(t *testing.T) {
 	})
 
 	t.Run("invalid pause start time", func(t *testing.T) {
-		block := testBlockCreate()
+		block := utils.TestBlockCreate()
 		block.Pauses[0].Start = "invalid start"
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -142,9 +146,9 @@ func TestUpdateBlockRoute(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		block := testBlockUpdated()
+		block := utils.TestBlockUpdated()
 		block.Id = 12
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -155,26 +159,26 @@ func TestUpdateBlockRoute(t *testing.T) {
 	})
 
 	t.Run("valid body", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequestWithBody(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
 			"/block",
-			testBlockUpdated(),
+			utils.TestBlockUpdated(),
 			http.StatusOK)
 	})
 }
 
 func TestUpdateBlockStartRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("bad query param", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -184,7 +188,7 @@ func TestUpdateBlockStartRoute(t *testing.T) {
 	})
 
 	t.Run("no body", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -194,7 +198,7 @@ func TestUpdateBlockStartRoute(t *testing.T) {
 	})
 
 	t.Run("invalid body", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -205,48 +209,48 @@ func TestUpdateBlockStartRoute(t *testing.T) {
 	})
 
 	t.Run("invalid start time", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
-			fmt.Sprintf("/block_start/%d", bID),
-			BodyStart{Start: "invalid start"},
+			fmt.Sprintf("/block_start/%d", utils.BID),
+			models.BodyStart{Start: "invalid start"},
 			http.StatusBadRequest)
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
 			"/block_start/12",
-			BodyStart{Start: bStartUpdated},
+			models.BodyStart{Start: utils.BStartUpdated},
 			http.StatusNotFound)
 	})
 
 	t.Run("valid body", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequestWithBody(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
-			fmt.Sprintf("/block_start/%d", bID),
-			BodyStart{Start: bStartUpdated},
+			fmt.Sprintf("/block_start/%d", utils.BID),
+			models.BodyStart{Start: utils.BStartUpdated},
 			http.StatusOK)
 	})
 }
 
 func TestUpdateBlockEndRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("bad query param", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -256,7 +260,7 @@ func TestUpdateBlockEndRoute(t *testing.T) {
 	})
 
 	t.Run("no body", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -266,7 +270,7 @@ func TestUpdateBlockEndRoute(t *testing.T) {
 	})
 
 	t.Run("invalid body", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -277,48 +281,48 @@ func TestUpdateBlockEndRoute(t *testing.T) {
 	})
 
 	t.Run("invalid end time", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
-			fmt.Sprintf("/block_start/%d", bID),
-			BodyEnd{End: "invalid end"},
+			fmt.Sprintf("/block_start/%d", utils.BID),
+			models.BodyEnd{End: "invalid end"},
 			http.StatusBadRequest)
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
 			"/block_end/12",
-			BodyEnd{End: bEndUpdated},
+			models.BodyEnd{End: utils.BEndUpdated},
 			http.StatusNotFound)
 	})
 
 	t.Run("valid body", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequestWithBody(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
-			fmt.Sprintf("/block_end/%d", bID),
-			BodyEnd{End: bEndUpdated},
+			fmt.Sprintf("/block_end/%d", utils.BID),
+			models.BodyEnd{End: utils.BEndUpdated},
 			http.StatusOK)
 	})
 }
 
 func TestUpdateBlockHomeofficeRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("bad query param", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -328,7 +332,7 @@ func TestUpdateBlockHomeofficeRoute(t *testing.T) {
 	})
 
 	t.Run("no body", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -338,7 +342,7 @@ func TestUpdateBlockHomeofficeRoute(t *testing.T) {
 	})
 
 	t.Run("invalid body", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -349,37 +353,37 @@ func TestUpdateBlockHomeofficeRoute(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
 			"/block_homeoffice/12",
-			BodyHomeoffice{Homeoffice: true},
+			models.BodyHomeoffice{Homeoffice: true},
 			http.StatusNotFound)
 	})
 
 	t.Run("valid body", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequestWithBody(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
-			fmt.Sprintf("/block_homeoffice/%d", bID),
-			BodyHomeoffice{Homeoffice: true},
+			fmt.Sprintf("/block_homeoffice/%d", utils.BID),
+			models.BodyHomeoffice{Homeoffice: true},
 			http.StatusOK)
 	})
 }
 
 func TestUpdatePauseStartRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("bad query param", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -389,7 +393,7 @@ func TestUpdatePauseStartRoute(t *testing.T) {
 	})
 
 	t.Run("no body", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -399,7 +403,7 @@ func TestUpdatePauseStartRoute(t *testing.T) {
 	})
 
 	t.Run("invalid body", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -410,48 +414,48 @@ func TestUpdatePauseStartRoute(t *testing.T) {
 	})
 
 	t.Run("invalid start time", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
-			fmt.Sprintf("/pause_start/%d", pID),
-			BodyStart{Start: "invalid start"},
+			fmt.Sprintf("/pause_start/%d", utils.PID),
+			models.BodyStart{Start: "invalid start"},
 			http.StatusBadRequest)
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
 			"/pause_start/12",
-			BodyStart{Start: pStartUpdated},
+			models.BodyStart{Start: utils.PStartUpdated},
 			http.StatusNotFound)
 	})
 
 	t.Run("valid body", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequestWithBody(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
-			fmt.Sprintf("/pause_start/%d", bID),
-			BodyStart{Start: pStartUpdated},
+			fmt.Sprintf("/pause_start/%d", utils.BID),
+			models.BodyStart{Start: utils.PStartUpdated},
 			http.StatusOK)
 	})
 }
 
 func TestUpdatePauseEndRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("bad query param", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -461,7 +465,7 @@ func TestUpdatePauseEndRoute(t *testing.T) {
 	})
 
 	t.Run("no body", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -471,7 +475,7 @@ func TestUpdatePauseEndRoute(t *testing.T) {
 	})
 
 	t.Run("invalid body", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -482,48 +486,48 @@ func TestUpdatePauseEndRoute(t *testing.T) {
 	})
 
 	t.Run("invalid end time", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
-			fmt.Sprintf("/pause_end/%d", pID),
-			BodyEnd{End: "invalid end"},
+			fmt.Sprintf("/pause_end/%d", utils.PID),
+			models.BodyEnd{End: "invalid end"},
 			http.StatusBadRequest)
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
 			"/pause_end/12",
-			BodyEnd{End: pEndUpdated},
+			models.BodyEnd{End: utils.PEndUpdated},
 			http.StatusNotFound)
 	})
 
 	t.Run("valid body", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequestWithBody(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
-			fmt.Sprintf("/pause_end/%d", bID),
-			BodyEnd{End: pEndUpdated},
+			fmt.Sprintf("/pause_end/%d", utils.BID),
+			models.BodyEnd{End: utils.PEndUpdated},
 			http.StatusOK)
 	})
 }
 
 func TestDeleteBlockRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("invalid query param", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -533,7 +537,7 @@ func TestDeleteBlockRoute(t *testing.T) {
 	})
 
 	t.Run("block not found", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -543,25 +547,25 @@ func TestDeleteBlockRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequest(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequest(
 			t,
 			r,
 			token,
 			http.MethodDelete,
-			fmt.Sprintf("/block/%d", bID),
+			fmt.Sprintf("/block/%d", utils.BID),
 			http.StatusOK)
 	})
 }
 
 func TestGetBlockByIDRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("invalid query param", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -571,7 +575,7 @@ func TestGetBlockByIDRoute(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -581,25 +585,25 @@ func TestGetBlockByIDRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequest(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequest(
 			t,
 			r,
 			token,
 			http.MethodGet,
-			fmt.Sprintf("/block/%d", bID),
+			fmt.Sprintf("/block/%d", utils.BID),
 			http.StatusOK)
 	})
 }
 
 func TestGetAllBlocksRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("no blocks available", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -609,8 +613,8 @@ func TestGetAllBlocksRoute(t *testing.T) {
 	})
 
 	t.Run("blocks found", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequest(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -621,13 +625,13 @@ func TestGetAllBlocksRoute(t *testing.T) {
 }
 
 func TestAddPauseRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("no body", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -637,37 +641,37 @@ func TestAddPauseRoute(t *testing.T) {
 	})
 
 	t.Run("no block with blockID", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPost,
 			"/pause",
-			testPauseCreate(),
+			utils.TestPauseCreate(),
 			http.StatusInternalServerError)
 	})
 
 	t.Run("valid body", func(t *testing.T) {
-		db.addBlock(testBlockCreateWithoutPause())
-		assertRequestWithBody(
+		db.AddBlock(utils.TestBlockCreateWithoutPause())
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPost,
 			"/pause",
-			testPauseCreate(),
+			utils.TestPauseCreate(),
 			http.StatusOK)
 	})
 }
 
 func TestUpdatePauseRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("no body", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -677,37 +681,37 @@ func TestUpdatePauseRoute(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
 			"/pause",
-			testPauseUpdated(),
+			utils.TestPauseUpdated(),
 			http.StatusNotFound)
 	})
 
 	t.Run("valid body", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequestWithBody(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPut,
 			"/pause",
-			testPauseUpdated(),
+			utils.TestPauseUpdated(),
 			http.StatusOK)
 	})
 }
 
 func TestDeletePauseRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("invalid query param", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -717,7 +721,7 @@ func TestDeletePauseRoute(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -727,25 +731,25 @@ func TestDeletePauseRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		db.addBlock(testBlockCreate())
-		assertRequest(
+		db.AddBlock(utils.TestBlockCreate())
+		utils.AssertRequest(
 			t,
 			r,
 			token,
 			http.MethodDelete,
-			fmt.Sprintf("/pause/%d", pID),
+			fmt.Sprintf("/pause/%d", utils.PID),
 			http.StatusOK)
 	})
 }
 
 func TestStartBlockRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("invalid query param", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -755,7 +759,7 @@ func TestStartBlockRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -765,7 +769,7 @@ func TestStartBlockRoute(t *testing.T) {
 	})
 
 	t.Run("block already active", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -776,13 +780,13 @@ func TestStartBlockRoute(t *testing.T) {
 }
 
 func TestEndBlockRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("block not started", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -792,9 +796,9 @@ func TestEndBlockRoute(t *testing.T) {
 	})
 
 	t.Run("pause still active", func(t *testing.T) {
-		db.startBlock(false)
-		db.startPause()
-		assertRequest(
+		db.StartBlock(false)
+		db.StartPause()
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -804,8 +808,8 @@ func TestEndBlockRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		db.endPause()
-		assertRequest(
+		db.EndPause()
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -816,13 +820,13 @@ func TestEndBlockRoute(t *testing.T) {
 }
 
 func TestStartPauseRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("no block active", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -832,8 +836,8 @@ func TestStartPauseRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		db.startBlock(false)
-		assertRequest(
+		db.StartBlock(false)
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -843,7 +847,7 @@ func TestStartPauseRoute(t *testing.T) {
 	})
 
 	t.Run("pause already active", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -854,13 +858,13 @@ func TestStartPauseRoute(t *testing.T) {
 }
 
 func TestEndPauseRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("no block active", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -870,8 +874,8 @@ func TestEndPauseRoute(t *testing.T) {
 	})
 
 	t.Run("no pause active", func(t *testing.T) {
-		db.startBlock(false)
-		assertRequest(
+		db.StartBlock(false)
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -881,8 +885,8 @@ func TestEndPauseRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		db.startPause()
-		assertRequest(
+		db.StartPause()
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -893,13 +897,13 @@ func TestEndPauseRoute(t *testing.T) {
 }
 
 func TestGetCurrentBlockRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("no block active", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -909,8 +913,8 @@ func TestGetCurrentBlockRoute(t *testing.T) {
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		db.startBlock(false)
-		assertRequest(
+		db.StartBlock(false)
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -921,16 +925,16 @@ func TestGetCurrentBlockRoute(t *testing.T) {
 }
 
 func TestLoginRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
-	envTest, err := envTestVariables()
+	envTest, err := utils.EnvTestVariables()
 	assert.NoError(t, err)
 
 	t.Run("no body", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,
@@ -940,7 +944,7 @@ func TestLoginRoute(t *testing.T) {
 	})
 
 	t.Run("invalid body", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
@@ -951,47 +955,47 @@ func TestLoginRoute(t *testing.T) {
 	})
 
 	t.Run("invalid email", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPost,
 			"/login",
-			Login{Email: "invalid@gmail.com", Password: envTest.password},
+			auth.Login{Email: "invalid@gmail.com", Password: envTest.Password},
 			http.StatusUnauthorized)
 	})
 
 	t.Run("invalid password", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPost,
 			"/login",
-			Login{Email: envTest.email, Password: "987654321"},
+			auth.Login{Email: envTest.Email, Password: "987654321"},
 			http.StatusUnauthorized)
 	})
 
 	t.Run("valid request", func(t *testing.T) {
-		assertRequestWithBody(
+		utils.AssertRequestWithBody(
 			t,
 			r,
 			token,
 			http.MethodPost,
 			"/login",
-			Login{Email: envTest.email, Password: envTest.password},
+			auth.Login{Email: envTest.Email, Password: envTest.Password},
 			http.StatusOK)
 	})
 }
 
 func TestRefreshRoute(t *testing.T) {
-	db := getNewTestDatabase()
-	defer db.close()
-	r := newRouter(db)
+	db := database.GetNewTestDatabase()
+	defer db.Close()
+	r := NewRouter(db)
 	gin.SetMode(gin.TestMode)
 
 	t.Run("token still valid", func(t *testing.T) {
-		assertRequest(
+		utils.AssertRequest(
 			t,
 			r,
 			token,

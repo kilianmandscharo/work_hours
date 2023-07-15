@@ -1,14 +1,16 @@
-package main
+package server
 
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/kilianmandscharo/work_hours/auth"
+	"github.com/kilianmandscharo/work_hours/database"
 )
 
-func newRouter(db *DB) *gin.Engine {
+func NewRouter(db *database.DB) *gin.Engine {
 	r := gin.Default()
 	r.Use(cors.Default())
-	r.Use(authorizer())
+	r.Use(auth.Authorizer())
 
 	h := newRequestHandler(db)
 

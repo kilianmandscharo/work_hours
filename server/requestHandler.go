@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"net/http"
@@ -7,29 +7,33 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/kilianmandscharo/work_hours/auth"
+	"github.com/kilianmandscharo/work_hours/database"
+	"github.com/kilianmandscharo/work_hours/models"
+	"github.com/kilianmandscharo/work_hours/utils"
 )
 
 type RequestHandler struct {
-	db *DB
+	db *database.DB
 }
 
-func newRequestHandler(db *DB) RequestHandler {
+func newRequestHandler(db *database.DB) RequestHandler {
 	return RequestHandler{db: db}
 }
 
 func (r *RequestHandler) handleAddBlock(c *gin.Context) {
-	var block BlockCreate
+	var block models.BlockCreate
 	if err := c.BindJSON(&block); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if !block.valid() {
+	if !block.Valid() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
 		return
 	}
 
-	if newBlock, err := r.db.addBlock(block); err != nil {
+	if newBlock, err := r.db.AddBlock(block); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not add block"})
 	} else {
 		c.JSON(http.StatusOK, newBlock)
@@ -37,18 +41,18 @@ func (r *RequestHandler) handleAddBlock(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleUpdateBlock(c *gin.Context) {
-	var block Block
+	var block models.Block
 	if err := c.BindJSON(&block); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if !block.valid() {
+	if !block.Valid() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updateBlock(block); err != nil {
+	if rowsAffected, err := r.db.UpdateBlock(block); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
 	} else {
 		if rowsAffected == 0 {
@@ -66,18 +70,18 @@ func (r *RequestHandler) handleUpdateBlockStart(c *gin.Context) {
 		return
 	}
 
-	var body BodyStart
+	var body models.BodyStart
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if !body.valid() {
+	if !body.Valid() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updateBlockStart(id, body.Start); err != nil {
+	if rowsAffected, err := r.db.UpdateBlockStart(id, body.Start); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
 	} else {
 		if rowsAffected == 0 {
@@ -95,18 +99,18 @@ func (r *RequestHandler) handleUpdateBlockEnd(c *gin.Context) {
 		return
 	}
 
-	var body BodyEnd
+	var body models.BodyEnd
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if !body.valid() {
+	if !body.Valid() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updateBlockEnd(id, body.End); err != nil {
+	if rowsAffected, err := r.db.UpdateBlockEnd(id, body.End); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
 	} else {
 		if rowsAffected == 0 {
@@ -124,13 +128,13 @@ func (r *RequestHandler) handleUpdateBlockHomeoffice(c *gin.Context) {
 		return
 	}
 
-	var body BodyHomeoffice
+	var body models.BodyHomeoffice
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updateBlockHomeoffice(id, body.Homeoffice); err != nil {
+	if rowsAffected, err := r.db.UpdateBlockHomeoffice(id, body.Homeoffice); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
 	} else {
 		if rowsAffected == 0 {
@@ -148,7 +152,7 @@ func (r *RequestHandler) handleDeleteBlock(c *gin.Context) {
 		return
 	}
 
-	if rowsAffected, err := r.db.deleteBlock(id); err != nil {
+	if rowsAffected, err := r.db.DeleteBlock(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete block"})
 	} else {
 		if rowsAffected == 0 {
@@ -166,7 +170,7 @@ func (r *RequestHandler) handleGetBlockByID(c *gin.Context) {
 		return
 	}
 
-	if block, err := r.db.getBlockByID(id); err != nil {
+	if block, err := r.db.GetBlockByID(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get block"})
 	} else {
 		c.JSON(http.StatusOK, block)
@@ -174,7 +178,7 @@ func (r *RequestHandler) handleGetBlockByID(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleGetAllBlocks(c *gin.Context) {
-	if blocks, err := r.db.getAllBlocks(); err != nil {
+	if blocks, err := r.db.GetAllBlocks(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get blocks"})
 	} else if len(blocks) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "no blocks available"})
@@ -184,17 +188,17 @@ func (r *RequestHandler) handleGetAllBlocks(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleAddPause(c *gin.Context) {
-	var pause PauseCreate
+	var pause models.PauseCreate
 	if err := c.BindJSON(&pause); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 	}
 
-	if !pause.valid() {
+	if !pause.Valid() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
 		return
 	}
 
-	if newPause, err := r.db.addPause(pause); err != nil {
+	if newPause, err := r.db.AddPause(pause); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not add pause"})
 	} else {
 		c.JSON(http.StatusOK, newPause)
@@ -202,18 +206,18 @@ func (r *RequestHandler) handleAddPause(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleUpdatePause(c *gin.Context) {
-	var pause Pause
+	var pause models.Pause
 	if err := c.BindJSON(&pause); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if !pause.valid() {
+	if !pause.Valid() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updatePause(pause); err != nil {
+	if rowsAffected, err := r.db.UpdatePause(pause); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
 	} else {
 		if rowsAffected == 0 {
@@ -231,18 +235,18 @@ func (r *RequestHandler) handleUpdatePauseStart(c *gin.Context) {
 		return
 	}
 
-	var body BodyStart
+	var body models.BodyStart
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if !body.valid() {
+	if !body.Valid() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updatePauseStart(id, body.Start); err != nil {
+	if rowsAffected, err := r.db.UpdatePauseStart(id, body.Start); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
 	} else {
 		if rowsAffected == 0 {
@@ -260,18 +264,18 @@ func (r *RequestHandler) handleUpdatePauseEnd(c *gin.Context) {
 		return
 	}
 
-	var body BodyEnd
+	var body models.BodyEnd
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if !body.valid() {
+	if !body.Valid() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid datetime found"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updatePauseEnd(id, body.End); err != nil {
+	if rowsAffected, err := r.db.UpdatePauseEnd(id, body.End); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
 	} else {
 		if rowsAffected == 0 {
@@ -289,7 +293,7 @@ func (r *RequestHandler) handleDeletePause(c *gin.Context) {
 		return
 	}
 
-	if rowsAffected, err := r.db.deletePause(id); err != nil {
+	if rowsAffected, err := r.db.DeletePause(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete pause"})
 	} else {
 		if rowsAffected == 0 {
@@ -307,7 +311,7 @@ func (r *RequestHandler) handleStartBlock(c *gin.Context) {
 		return
 	}
 
-	if block, err := r.db.startBlock(homeoffice); err != nil {
+	if block, err := r.db.StartBlock(homeoffice); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not start block"})
 	} else {
 		c.JSON(http.StatusOK, block)
@@ -315,7 +319,7 @@ func (r *RequestHandler) handleStartBlock(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleEndBlock(c *gin.Context) {
-	if block, err := r.db.endBlock(); err != nil {
+	if block, err := r.db.EndBlock(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not end block"})
 	} else {
 		c.JSON(http.StatusOK, block)
@@ -323,7 +327,7 @@ func (r *RequestHandler) handleEndBlock(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleStartPause(c *gin.Context) {
-	if pause, err := r.db.startPause(); err != nil {
+	if pause, err := r.db.StartPause(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not start pause"})
 	} else {
 		c.JSON(http.StatusOK, pause)
@@ -331,7 +335,7 @@ func (r *RequestHandler) handleStartPause(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleEndPause(c *gin.Context) {
-	if pause, err := r.db.endPause(); err != nil {
+	if pause, err := r.db.EndPause(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete pause"})
 	} else {
 		c.JSON(http.StatusOK, pause)
@@ -339,7 +343,7 @@ func (r *RequestHandler) handleEndPause(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleGetCurrentBlock(c *gin.Context) {
-	if block, err := r.db.getCurrentBlock(); err != nil {
+	if block, err := r.db.GetCurrentBlock(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get current block"})
 	} else {
 		c.JSON(http.StatusOK, block)
@@ -347,30 +351,30 @@ func (r *RequestHandler) handleGetCurrentBlock(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleLogin(c *gin.Context) {
-	env, err := envVariables()
+	env, err := utils.EnvVariables()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load .env file"})
 	}
-	envTest, err := envTestVariables()
+	envTest, err := utils.EnvTestVariables()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load .env file"})
 	}
 
 	var email string
 	if gin.Mode() == gin.TestMode {
-		email = envTest.email
+		email = envTest.Email
 	} else {
-		email = env.email
+		email = env.Email
 	}
 
 	var hash string
 	if gin.Mode() == gin.TestMode {
-		hash = envTest.hash
+		hash = envTest.Hash
 	} else {
-		hash = env.hash
+		hash = env.Hash
 	}
 
-	var login Login
+	var login auth.Login
 	if err := c.BindJSON(&login); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
@@ -381,12 +385,12 @@ func (r *RequestHandler) handleLogin(c *gin.Context) {
 		return
 	}
 
-	if !validatePassword(login.Password, hash) {
+	if !auth.ValidatePassword(login.Password, hash) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid password"})
 		return
 	}
 
-	token, err := createToken(login.Email, env.tokenKey)
+	token, err := auth.CreateToken(login.Email, env.TokenKey)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
@@ -397,20 +401,20 @@ func (r *RequestHandler) handleLogin(c *gin.Context) {
 }
 
 func (r *RequestHandler) handleRefresh(c *gin.Context) {
-	tokenString, err := extractBearerToken(c.GetHeader("Authorization"))
+	tokenString, err := auth.ExtractBearerToken(c.GetHeader("Authorization"))
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "could not extract token"})
 		return
 	}
 
-	env, err := envVariables()
+	env, err := utils.EnvVariables()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load .env file"})
 	}
 
 	claims := &jwt.StandardClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(env.tokenKey), nil
+		return []byte(env.TokenKey), nil
 	})
 
 	if err != nil {
@@ -431,7 +435,7 @@ func (r *RequestHandler) handleRefresh(c *gin.Context) {
 		return
 	}
 
-	newToken, err := createToken(env.email, env.tokenKey)
+	newToken, err := auth.CreateToken(env.Email, env.TokenKey)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create new token"})
 		return

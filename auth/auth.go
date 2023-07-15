@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/kilianmandscharo/work_hours/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,12 +22,12 @@ func hashPassword(pw string) (string, error) {
 	return string(bytes), err
 }
 
-func validatePassword(pw string, hash string) bool {
+func ValidatePassword(pw string, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(pw))
 	return err == nil
 }
 
-func createToken(username string, key string) (string, error) {
+func CreateToken(username string, key string) (string, error) {
 	claims := &jwt.StandardClaims{
 		ExpiresAt: time.Now().Add(10 * time.Minute).UnixMilli(),
 	}
@@ -41,7 +42,7 @@ func createToken(username string, key string) (string, error) {
 	return tokenString, nil
 }
 
-func extractBearerToken(header string) (string, error) {
+func ExtractBearerToken(header string) (string, error) {
 	if header == "" {
 		return "", errors.New("bad header value given")
 	}
@@ -54,27 +55,27 @@ func extractBearerToken(header string) (string, error) {
 	return jwtToken[1], nil
 }
 
-func authorizer() gin.HandlerFunc {
+func Authorizer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.URL.Path == "/login" {
 			c.Next()
 			return
 		}
 
-		tokenString, err := extractBearerToken(c.GetHeader("Authorization"))
+		tokenString, err := ExtractBearerToken(c.GetHeader("Authorization"))
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "could not extract token"})
 			return
 		}
 
-		env, err := envVariables()
+		env, err := utils.EnvVariables()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load .env file"})
 			return
 		}
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return []byte(env.tokenKey), nil
+			return []byte(env.TokenKey), nil
 		})
 
 		if err != nil {

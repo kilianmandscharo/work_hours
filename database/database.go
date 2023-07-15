@@ -1,12 +1,14 @@
-package main
+package database
 
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"os"
 	"path"
 	"time"
 
+	"github.com/kilianmandscharo/work_hours/models"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -14,7 +16,19 @@ type DB struct {
 	db *sql.DB
 }
 
-func newTestDatabase() (*DB, error) {
+func GetNewTestDatabase() *DB {
+	db, err := NewTestDatabase()
+	if err != nil {
+		log.Fatalf("ERROR: could not open test database, %v", err)
+	}
+	err = db.Init()
+	if err != nil {
+		log.Fatalf("ERROR: could not initialize test database, %v", err)
+	}
+	return db
+}
+
+func NewTestDatabase() (*DB, error) {
 	db, err := sql.Open("sqlite3", "file:test.db?cache=shared&mode=memory&_foreign_keys=true")
 	if err != nil {
 		return nil, err
@@ -22,7 +36,7 @@ func newTestDatabase() (*DB, error) {
 	return &DB{db: db}, nil
 }
 
-func newDatabase() (*DB, error) {
+func NewDatabase() (*DB, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
@@ -45,7 +59,7 @@ func newDatabase() (*DB, error) {
 	return &DB{db: db}, nil
 }
 
-func (db *DB) init() error {
+func (db *DB) Init() error {
 	q := `
   CREATE TABLE IF NOT EXISTS block
   (id INTEGER PRIMARY KEY ASC,
@@ -93,7 +107,7 @@ func (db *DB) init() error {
 	return nil
 }
 
-func (db *DB) close() error {
+func (db *DB) Close() error {
 	err := db.db.Close()
 	if err != nil {
 		return err
@@ -101,7 +115,7 @@ func (db *DB) close() error {
 	return nil
 }
 
-func (db *DB) getAllBlocks() ([]Block, error) {
+func (db *DB) GetAllBlocks() ([]models.Block, error) {
 	q := `
   SELECT * FROM block
   `
@@ -111,15 +125,15 @@ func (db *DB) getAllBlocks() ([]Block, error) {
 	}
 	defer rows.Close()
 
-	var blocks []Block
+	var blocks []models.Block
 	for rows.Next() {
-		var b Block
+		var b models.Block
 		err = rows.Scan(&b.Id, &b.Start, &b.End, &b.Homeoffice)
 		if err != nil {
 			return nil, err
 		}
 
-		pauses, err := db.getPausesByBlockID(b.Id)
+		pauses, err := db.GetPausesByBlockID(b.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +145,7 @@ func (db *DB) getAllBlocks() ([]Block, error) {
 	return blocks, nil
 }
 
-func (db *DB) getPausesByBlockID(blockID int) ([]Pause, error) {
+func (db *DB) GetPausesByBlockID(blockID int) ([]models.Pause, error) {
 	q := `
   SELECT * FROM pause
   WHERE block_id = ?
@@ -142,9 +156,9 @@ func (db *DB) getPausesByBlockID(blockID int) ([]Pause, error) {
 	}
 	defer rows.Close()
 
-	var pauses []Pause
+	var pauses []models.Pause
 	for rows.Next() {
-		var p Pause
+		var p models.Pause
 		err = rows.Scan(&p.Id, &p.Start, &p.End, &p.BlockID)
 		if err != nil {
 			return nil, err
@@ -156,17 +170,17 @@ func (db *DB) getPausesByBlockID(blockID int) ([]Pause, error) {
 	return pauses, nil
 }
 
-func (db *DB) getBlockByID(id int) (Block, error) {
+func (db *DB) GetBlockByID(id int) (models.Block, error) {
 	q := `
   SELECT * FROM block
   WHERE id = ?
   `
 	row := db.db.QueryRow(q, id)
-	var b Block
+	var b models.Block
 	if err := row.Scan(&b.Id, &b.Start, &b.End, &b.Homeoffice); err != nil {
 		return b, err
 	}
-	pauses, err := db.getPausesByBlockID(b.Id)
+	pauses, err := db.GetPausesByBlockID(b.Id)
 	if err != nil {
 		return b, err
 	}
@@ -174,21 +188,21 @@ func (db *DB) getBlockByID(id int) (Block, error) {
 	return b, nil
 }
 
-func (db *DB) getPauseByID(id int) (Pause, error) {
+func (db *DB) GetPauseByID(id int) (models.Pause, error) {
 	q := `
   SELECT * FROM pause
   WHERE id = ?
   `
 	row := db.db.QueryRow(q, id)
-	var p Pause
+	var p models.Pause
 	if err := row.Scan(&p.Id, &p.Start, &p.End, &p.BlockID); err != nil {
 		return p, err
 	}
 	return p, nil
 }
 
-func (db *DB) addBlock(block BlockCreate) (Block, error) {
-	var newBlock Block
+func (db *DB) AddBlock(block models.BlockCreate) (models.Block, error) {
+	var newBlock models.Block
 	q := `
   INSERT INTO block (start, end, homeoffice)
   VALUES (?, ?, ?)
@@ -204,8 +218,8 @@ func (db *DB) addBlock(block BlockCreate) (Block, error) {
 	}
 
 	for _, pause := range block.Pauses {
-		newPause, err := db.addPause(
-			PauseCreate{
+		newPause, err := db.AddPause(
+			models.PauseCreate{
 				Start:   pause.Start,
 				End:     pause.End,
 				BlockID: int(id)})
@@ -221,8 +235,8 @@ func (db *DB) addBlock(block BlockCreate) (Block, error) {
 	return newBlock, nil
 }
 
-func (db *DB) addPause(pause PauseCreate) (Pause, error) {
-	var newPause Pause
+func (db *DB) AddPause(pause models.PauseCreate) (models.Pause, error) {
+	var newPause models.Pause
 	s := `
   INSERT INTO pause (start, end, block_id)
   VALUES (?, ?, ?)
@@ -244,7 +258,7 @@ func (db *DB) addPause(pause PauseCreate) (Pause, error) {
 	return newPause, nil
 }
 
-func (db *DB) deleteBlock(id int) (int, error) {
+func (db *DB) DeleteBlock(id int) (int, error) {
 	currentBlockID, err := db.getCurrentBlockID()
 	if err != nil {
 		return 0, err
@@ -279,7 +293,7 @@ func (db *DB) deleteBlock(id int) (int, error) {
 	return int(rowsAffected), err
 }
 
-func (db *DB) deletePause(id int) (int, error) {
+func (db *DB) DeletePause(id int) (int, error) {
 	currentPauseID, err := db.getCurrentPauseID()
 	if err != nil {
 		return 0, err
@@ -308,7 +322,7 @@ func (db *DB) deletePause(id int) (int, error) {
 	return int(rowsAffected), err
 }
 
-func (db *DB) updateBlock(block Block) (int, error) {
+func (db *DB) UpdateBlock(block models.Block) (int, error) {
 	q := `
   UPDATE block
   SET start = ?, end = ?, homeoffice = ?
@@ -327,7 +341,7 @@ func (db *DB) updateBlock(block Block) (int, error) {
 	return int(rowsAffected), nil
 }
 
-func (db *DB) updateBlockStart(id int, start string) (int, error) {
+func (db *DB) UpdateBlockStart(id int, start string) (int, error) {
 	q := `
   UPDATE block
   SET start = ?
@@ -346,7 +360,7 @@ func (db *DB) updateBlockStart(id int, start string) (int, error) {
 	return int(rowsAffected), nil
 }
 
-func (db *DB) updateBlockEnd(id int, end string) (int, error) {
+func (db *DB) UpdateBlockEnd(id int, end string) (int, error) {
 	q := `
   UPDATE block
   SET end = ?
@@ -365,7 +379,7 @@ func (db *DB) updateBlockEnd(id int, end string) (int, error) {
 	return int(rowsAffected), nil
 }
 
-func (db *DB) updateBlockHomeoffice(id int, homeoffice bool) (int, error) {
+func (db *DB) UpdateBlockHomeoffice(id int, homeoffice bool) (int, error) {
 	q := `
   UPDATE block
   SET homeoffice = ?
@@ -384,7 +398,7 @@ func (db *DB) updateBlockHomeoffice(id int, homeoffice bool) (int, error) {
 	return int(rowsAffected), nil
 }
 
-func (db *DB) updatePause(pause Pause) (int, error) {
+func (db *DB) UpdatePause(pause models.Pause) (int, error) {
 	q := `
   UPDATE pause
   SET start = ?, end = ?
@@ -403,7 +417,7 @@ func (db *DB) updatePause(pause Pause) (int, error) {
 	return int(rowsAffected), nil
 }
 
-func (db *DB) updatePauseStart(id int, start string) (int, error) {
+func (db *DB) UpdatePauseStart(id int, start string) (int, error) {
 	q := `
   UPDATE pause
   SET start = ?
@@ -422,7 +436,7 @@ func (db *DB) updatePauseStart(id int, start string) (int, error) {
 	return int(rowsAffected), nil
 }
 
-func (db *DB) updatePauseEnd(id int, end string) (int, error) {
+func (db *DB) UpdatePauseEnd(id int, end string) (int, error) {
 	q := `
   UPDATE pause
   SET end = ?
@@ -507,8 +521,8 @@ func (db *DB) setCurrentPauseID(id int) error {
 	return nil
 }
 
-func (db *DB) startBlock(homeoffice bool) (Block, error) {
-	var newBlock Block
+func (db *DB) StartBlock(homeoffice bool) (models.Block, error) {
+	var newBlock models.Block
 
 	currentBlockID, err := db.getCurrentBlockID()
 	if err != nil {
@@ -518,11 +532,11 @@ func (db *DB) startBlock(homeoffice bool) (Block, error) {
 		return newBlock, errors.New("current block already active")
 	}
 
-	block := BlockCreate{
+	block := models.BlockCreate{
 		Start:      time.Now().Format(time.RFC3339),
 		Homeoffice: homeoffice,
 	}
-	newBlock, err = db.addBlock(block)
+	newBlock, err = db.AddBlock(block)
 	if err != nil {
 		return newBlock, err
 	}
@@ -535,8 +549,8 @@ func (db *DB) startBlock(homeoffice bool) (Block, error) {
 	return newBlock, nil
 }
 
-func (db *DB) endBlock() (Block, error) {
-	var block Block
+func (db *DB) EndBlock() (models.Block, error) {
+	var block models.Block
 
 	currentBlockID, err := db.getCurrentBlockID()
 	if err != nil {
@@ -565,7 +579,7 @@ func (db *DB) endBlock() (Block, error) {
 		return block, err
 	}
 
-	block, err = db.getBlockByID(currentBlockID)
+	block, err = db.GetBlockByID(currentBlockID)
 	if err != nil {
 		return block, err
 	}
@@ -578,15 +592,15 @@ func (db *DB) endBlock() (Block, error) {
 	return block, nil
 }
 
-func (db *DB) getCurrentBlock() (Block, error) {
-	var block Block
+func (db *DB) GetCurrentBlock() (models.Block, error) {
+	var block models.Block
 
 	currentBlockID, err := db.getCurrentBlockID()
 	if err != nil {
 		return block, err
 	}
 
-	block, err = db.getBlockByID(currentBlockID)
+	block, err = db.GetBlockByID(currentBlockID)
 	if err != nil {
 		return block, err
 	}
@@ -594,8 +608,8 @@ func (db *DB) getCurrentBlock() (Block, error) {
 	return block, nil
 }
 
-func (db *DB) startPause() (Pause, error) {
-	var newPause Pause
+func (db *DB) StartPause() (models.Pause, error) {
+	var newPause models.Pause
 
 	currentBlockID, err := db.getCurrentBlockID()
 	if err != nil {
@@ -613,11 +627,11 @@ func (db *DB) startPause() (Pause, error) {
 		return newPause, errors.New("current pause already active")
 	}
 
-	pause := PauseCreate{
+	pause := models.PauseCreate{
 		Start:   time.Now().Format(time.RFC3339),
 		BlockID: currentBlockID,
 	}
-	newPause, err = db.addPause(pause)
+	newPause, err = db.AddPause(pause)
 	if err != nil {
 		return newPause, err
 	}
@@ -630,8 +644,8 @@ func (db *DB) startPause() (Pause, error) {
 	return newPause, nil
 }
 
-func (db *DB) endPause() (Pause, error) {
-	var pause Pause
+func (db *DB) EndPause() (models.Pause, error) {
+	var pause models.Pause
 
 	currentPauseID, err := db.getCurrentPauseID()
 	if err != nil {
@@ -652,7 +666,7 @@ func (db *DB) endPause() (Pause, error) {
 		return pause, err
 	}
 
-	pause, err = db.getPauseByID(currentPauseID)
+	pause, err = db.GetPauseByID(currentPauseID)
 	if err != nil {
 		return pause, err
 	}

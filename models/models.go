@@ -1,4 +1,4 @@
-package main
+package models
 
 import "time"
 
@@ -10,9 +10,9 @@ type Block struct {
 	Pauses     []Pause `json:"pauses"`
 }
 
-func (b *Block) valid() bool {
+func (b *Block) Valid() bool {
 	for _, pause := range b.Pauses {
-		if !pause.valid() {
+		if !pause.Valid() {
 			return false
 		}
 	}
@@ -30,9 +30,9 @@ type BlockCreate struct {
 	Pauses     []PauseWithoutBlockID `json:"pauses"`
 }
 
-func (b *BlockCreate) valid() bool {
+func (b *BlockCreate) Valid() bool {
 	for _, pause := range b.Pauses {
-		if !pause.valid() {
+		if !pause.Valid() {
 			return false
 		}
 	}
@@ -49,7 +49,7 @@ type Pause struct {
 	BlockID int    `json:"blockID" binding:"required"`
 }
 
-func (b *Pause) valid() bool {
+func (b *Pause) Valid() bool {
 	_, startErr := time.Parse(time.RFC3339, b.Start)
 	_, endErr := time.Parse(time.RFC3339, b.End)
 
@@ -62,7 +62,7 @@ type PauseCreate struct {
 	BlockID int    `json:"blockID" binding:"required"`
 }
 
-func (b *PauseCreate) valid() bool {
+func (b *PauseCreate) Valid() bool {
 	_, startErr := time.Parse(time.RFC3339, b.Start)
 	_, endErr := time.Parse(time.RFC3339, b.End)
 
@@ -74,7 +74,7 @@ type PauseWithoutBlockID struct {
 	End   string `json:"end" binding:"required"`
 }
 
-func (b *PauseWithoutBlockID) valid() bool {
+func (b *PauseWithoutBlockID) Valid() bool {
 	_, startErr := time.Parse(time.RFC3339, b.Start)
 	_, endErr := time.Parse(time.RFC3339, b.End)
 
@@ -85,7 +85,7 @@ type BodyStart struct {
 	Start string `json:"start" binding:"required"`
 }
 
-func (b *BodyStart) valid() bool {
+func (b *BodyStart) Valid() bool {
 	_, err := time.Parse(time.RFC3339, b.Start)
 
 	return err == nil
@@ -95,7 +95,7 @@ type BodyEnd struct {
 	End string `json:"end" binding:"required"`
 }
 
-func (b *BodyEnd) valid() bool {
+func (b *BodyEnd) Valid() bool {
 	_, err := time.Parse(time.RFC3339, b.End)
 
 	return err == nil

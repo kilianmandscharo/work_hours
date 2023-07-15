@@ -36,10 +36,14 @@ func (r *RequestHandler) handleUpdateBlock(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
-	if err := r.db.updateBlock(block); err != nil {
+	if rowsAffected, err := r.db.updateBlock(block); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
 	} else {
-		c.Status(http.StatusOK)
+		if rowsAffected == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "block not found"})
+		} else {
+			c.Status(http.StatusOK)
+		}
 	}
 }
 
@@ -50,16 +54,13 @@ func (r *RequestHandler) handleUpdateBlockStart(c *gin.Context) {
 		return
 	}
 
-	type Body struct {
-		start string
-	}
-	var body Body
+	var body BodyStart
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updateBlockStart(id, body.start); err != nil {
+	if rowsAffected, err := r.db.updateBlockStart(id, body.Start); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
 	} else {
 		if rowsAffected == 0 {
@@ -77,16 +78,13 @@ func (r *RequestHandler) handleUpdateBlockEnd(c *gin.Context) {
 		return
 	}
 
-	type Body struct {
-		end string
-	}
-	var body Body
+	var body BodyEnd
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updateBlockEnd(id, body.end); err != nil {
+	if rowsAffected, err := r.db.updateBlockEnd(id, body.End); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
 	} else {
 		if rowsAffected == 0 {
@@ -104,16 +102,13 @@ func (r *RequestHandler) handleUpdateBlockHomeoffice(c *gin.Context) {
 		return
 	}
 
-	type Body struct {
-		homeoffice bool
-	}
-	var body Body
+	var body BodyHomeoffice
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updateBlockHomeoffice(id, body.homeoffice); err != nil {
+	if rowsAffected, err := r.db.updateBlockHomeoffice(id, body.Homeoffice); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update block"})
 	} else {
 		if rowsAffected == 0 {
@@ -182,10 +177,14 @@ func (r *RequestHandler) handleUpdatePause(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
-	if err := r.db.updatePause(pause); err != nil {
+	if rowsAffected, err := r.db.updatePause(pause); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
 	} else {
-		c.Status(http.StatusOK)
+		if rowsAffected == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "pause not found"})
+		} else {
+			c.Status(http.StatusOK)
+		}
 	}
 }
 
@@ -196,16 +195,13 @@ func (r *RequestHandler) handleUpdatePauseStart(c *gin.Context) {
 		return
 	}
 
-	type Body struct {
-		start string
-	}
-	var body Body
+	var body BodyStart
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updatePauseStart(id, body.start); err != nil {
+	if rowsAffected, err := r.db.updatePauseStart(id, body.Start); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
 	} else {
 		if rowsAffected == 0 {
@@ -223,16 +219,13 @@ func (r *RequestHandler) handleUpdatePauseEnd(c *gin.Context) {
 		return
 	}
 
-	type Body struct {
-		end string
-	}
-	var body Body
+	var body BodyEnd
 	if err := c.BindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read body"})
 		return
 	}
 
-	if rowsAffected, err := r.db.updatePauseEnd(id, body.end); err != nil {
+	if rowsAffected, err := r.db.updatePauseEnd(id, body.End); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update pause"})
 	} else {
 		if rowsAffected == 0 {

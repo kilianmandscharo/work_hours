@@ -26,11 +26,11 @@ func newRouter(db *DB) *gin.Engine {
 	r.PUT("/pause_end/:id", h.handleUpdatePauseEnd)
 	r.DELETE("/pause/:id", h.handleDeletePause)
 
-	r.POST("/block_start", h.handleStartBlock)
-	r.POST("/block_end", h.handleEndBlock)
+	r.POST("/current_block_start", h.handleStartBlock)
+	r.POST("/current_block_end", h.handleEndBlock)
 	r.GET("/block_current", h.handleGetCurrentBlock)
-	r.POST("/pause_start", h.handleStartPause)
-	r.POST("/pause_end", h.handleEndPause)
+	r.POST("/current_pause_start", h.handleStartPause)
+	r.POST("/current_pause_end", h.handleEndPause)
 
 	r.POST("/login", h.handleLogin)
 	r.POST("/refresh", h.handleRefresh)

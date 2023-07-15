@@ -308,17 +308,23 @@ func (db *DB) deletePause(id int) (int, error) {
 	return int(rowsAffected), err
 }
 
-func (db *DB) updateBlock(block Block) error {
+func (db *DB) updateBlock(block Block) (int, error) {
 	q := `
   UPDATE block
   SET start = ?, end = ?, homeoffice = ?
   WHERE id = ?
   `
-	_, err := db.db.Exec(q, block.Start, block.End, block.Homeoffice, block.Id)
+	result, err := db.db.Exec(q, block.Start, block.End, block.Homeoffice, block.Id)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsAffected), nil
 }
 
 func (db *DB) updateBlockStart(id int, start string) (int, error) {
@@ -378,17 +384,23 @@ func (db *DB) updateBlockHomeoffice(id int, homeoffice bool) (int, error) {
 	return int(rowsAffected), nil
 }
 
-func (db *DB) updatePause(pause Pause) error {
+func (db *DB) updatePause(pause Pause) (int, error) {
 	q := `
   UPDATE pause
   SET start = ?, end = ?
   WHERE id = ?
   `
-	_, err := db.db.Exec(q, pause.Start, pause.End, pause.Id)
+	result, err := db.db.Exec(q, pause.Start, pause.End, pause.Id)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(rowsAffected), nil
 }
 
 func (db *DB) updatePauseStart(id int, start string) (int, error) {

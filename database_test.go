@@ -218,10 +218,15 @@ func TestUpdateBlock(t *testing.T) {
 	db := getNewTestDatabase()
 	defer db.close()
 
+	rowsAffected, err := db.updateBlock(testBlockUpdated())
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 0)
+
 	db.addBlock(testBlockCreate())
 
-	err := db.updateBlock(testBlockUpdated())
+	rowsAffected, err = db.updateBlock(testBlockUpdated())
 	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 1)
 
 	b, err := db.getBlockByID(bID)
 	assert.NoError(t, err)
@@ -289,10 +294,15 @@ func TestUpdatePause(t *testing.T) {
 	db := getNewTestDatabase()
 	defer db.close()
 
+	rowsAffected, err := db.updatePause(testPauseUpdated())
+	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 0)
+
 	db.addBlock(testBlockCreate())
 
-	err := db.updatePause(testPauseUpdated())
+	rowsAffected, err = db.updatePause(testPauseUpdated())
 	assert.NoError(t, err)
+	assert.Equal(t, rowsAffected, 1)
 
 	p, err := db.getPauseByID(pID)
 	assertTestPauseUpdated(t, p)

@@ -1,9 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -125,4 +131,28 @@ func getNewTestDatabase() *DB {
 		log.Fatalf("ERROR: could not initialize test database, %v", err)
 	}
 	return db
+}
+
+func assertRequest(t *testing.T, r *gin.Engine, token string, method string, route string, statusWant int) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(method, route, nil)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	r.ServeHTTP(w, req)
+	assert.Equal(t, statusWant, w.Code)
+}
+
+func assertRequestWithBody(t *testing.T, r *gin.Engine, token string, method string, route string, data any, statusWant int) {
+	reader := getTestReader(t, data)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(method, route, reader)
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	r.ServeHTTP(w, req)
+	assert.Equal(t, statusWant, w.Code)
+}
+
+func getTestReader(t *testing.T, data any) *bytes.Reader {
+	dataBytes, err := json.Marshal(data)
+	assert.NoError(t, err)
+	dataReader := bytes.NewReader(dataBytes)
+	return dataReader
 }

@@ -354,10 +354,12 @@ func (r *RequestHandler) handleLogin(c *gin.Context) {
 	env, err := utils.EnvVariables()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load .env file"})
+		return
 	}
 	envTest, err := utils.EnvTestVariables()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load .env file"})
+		return
 	}
 
 	var email string

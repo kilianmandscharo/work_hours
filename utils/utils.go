@@ -2,6 +2,8 @@ package utils
 
 import (
 	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/joho/godotenv"
 )
@@ -20,7 +22,13 @@ type EnvTest struct {
 
 func EnvVariables() (Env, error) {
 	var env Env
-	err := godotenv.Load("../.env")
+
+	_, filename, _, _ := runtime.Caller(0)
+	currentDir := filepath.Dir(filename)
+	parentDir := filepath.Dir(currentDir)
+	path := filepath.Join(parentDir, ".env")
+
+	err := godotenv.Load(path)
 	if err != nil {
 		return env, err
 	}
@@ -32,7 +40,13 @@ func EnvVariables() (Env, error) {
 
 func EnvTestVariables() (EnvTest, error) {
 	var envTest EnvTest
-	err := godotenv.Load("../.env.dev")
+
+	_, filename, _, _ := runtime.Caller(0)
+	currentDir := filepath.Dir(filename)
+	parentDir := filepath.Dir(currentDir)
+	path := filepath.Join(parentDir, ".env.dev")
+
+	err := godotenv.Load(path)
 	if err != nil {
 		return envTest, err
 	}

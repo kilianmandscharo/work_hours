@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"github.com/kilianmandscharo/work_hours/datetime"
+)
 
 type Block struct {
 	Id         int     `json:"id" binding:"required"`
@@ -17,10 +19,7 @@ func (b *Block) Valid() bool {
 		}
 	}
 
-	_, startErr := time.Parse(time.RFC3339, b.Start)
-	_, endErr := time.Parse(time.RFC3339, b.End)
-
-	return startErr == nil && endErr == nil
+	return datetime.IsValidRFC3339(b.Start) && datetime.IsValidRFC3339(b.End)
 }
 
 type BlockCreate struct {
@@ -36,10 +35,8 @@ func (b *BlockCreate) Valid() bool {
 			return false
 		}
 	}
-	_, startErr := time.Parse(time.RFC3339, b.Start)
-	_, endErr := time.Parse(time.RFC3339, b.End)
 
-	return startErr == nil && endErr == nil
+	return datetime.IsValidRFC3339(b.Start) && datetime.IsValidRFC3339(b.End)
 }
 
 type Pause struct {
@@ -49,11 +46,8 @@ type Pause struct {
 	BlockID int    `json:"blockID" binding:"required"`
 }
 
-func (b *Pause) Valid() bool {
-	_, startErr := time.Parse(time.RFC3339, b.Start)
-	_, endErr := time.Parse(time.RFC3339, b.End)
-
-	return startErr == nil && endErr == nil
+func (p *Pause) Valid() bool {
+	return datetime.IsValidRFC3339(p.Start) && datetime.IsValidRFC3339(p.End)
 }
 
 type PauseCreate struct {
@@ -62,11 +56,8 @@ type PauseCreate struct {
 	BlockID int    `json:"blockID" binding:"required"`
 }
 
-func (b *PauseCreate) Valid() bool {
-	_, startErr := time.Parse(time.RFC3339, b.Start)
-	_, endErr := time.Parse(time.RFC3339, b.End)
-
-	return startErr == nil && endErr == nil
+func (p *PauseCreate) Valid() bool {
+	return datetime.IsValidRFC3339(p.Start) && datetime.IsValidRFC3339(p.End)
 }
 
 type PauseWithoutBlockID struct {
@@ -74,11 +65,8 @@ type PauseWithoutBlockID struct {
 	End   string `json:"end" binding:"required"`
 }
 
-func (b *PauseWithoutBlockID) Valid() bool {
-	_, startErr := time.Parse(time.RFC3339, b.Start)
-	_, endErr := time.Parse(time.RFC3339, b.End)
-
-	return startErr == nil && endErr == nil
+func (p *PauseWithoutBlockID) Valid() bool {
+	return datetime.IsValidRFC3339(p.Start) && datetime.IsValidRFC3339(p.End)
 }
 
 type BodyStart struct {
@@ -86,9 +74,7 @@ type BodyStart struct {
 }
 
 func (b *BodyStart) Valid() bool {
-	_, err := time.Parse(time.RFC3339, b.Start)
-
-	return err == nil
+	return datetime.IsValidRFC3339(b.Start)
 }
 
 type BodyEnd struct {
@@ -96,9 +82,7 @@ type BodyEnd struct {
 }
 
 func (b *BodyEnd) Valid() bool {
-	_, err := time.Parse(time.RFC3339, b.End)
-
-	return err == nil
+	return datetime.IsValidRFC3339(b.End)
 }
 
 type BodyHomeoffice struct {

@@ -123,6 +123,150 @@ func TestGetPauseByID(t *testing.T) {
 	utils.AssertTestPause(t, p)
 }
 
+func TestGetBlocksWithinRange(t *testing.T) {
+	db := GetNewTestDatabase()
+	defer db.Close()
+
+	testBlocks := utils.CreateRangeTestBlocks()
+
+	for _, block := range testBlocks {
+		db.AddBlock(block)
+	}
+
+	testCases := []struct {
+		start  string
+		end    string
+		length int
+		id     int
+	}{
+		{
+			start:  "2023-01-01T07:00:00Z",
+			end:    "2023-01-31T07:00:00Z",
+			length: 0,
+			id:     -1,
+		},
+		{
+			start:  "2023-05-01T07:00:00Z",
+			end:    "2023-05-31T07:00:00Z",
+			length: 1,
+			id:     1,
+		},
+		{
+			start:  "2023-06-01T07:00:00Z",
+			end:    "2023-06-30T07:00:00Z",
+			length: 1,
+			id:     2,
+		},
+		{
+			start:  "2023-07-01T07:00:00Z",
+			end:    "2023-07-31T07:00:00Z",
+			length: 1,
+			id:     3,
+		},
+		{
+			start:  "2023-05-01T07:00:00Z",
+			end:    "2023-07-31T07:00:00Z",
+			length: 3,
+			id:     -1,
+		},
+	}
+
+	for _, testCase := range testCases {
+		blocks, err := db.GetBlocksWithinRange(
+			testCase.start,
+			testCase.end,
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, testCase.length, len(blocks))
+
+		if testCase.id > 0 && testCase.length > 0 {
+			assert.Equal(t, testCase.id, blocks[0].Id)
+		}
+	}
+}
+
+func TestGetBlocksAfterStart(t *testing.T) {
+	db := GetNewTestDatabase()
+	defer db.Close()
+
+	testBlocks := utils.CreateRangeTestBlocks()
+
+	for _, block := range testBlocks {
+		db.AddBlock(block)
+	}
+
+	testCases := []struct {
+		start  string
+		length int
+	}{
+		{
+			start:  "2023-08-01T07:00:00Z",
+			length: 0,
+		},
+		{
+			start:  "2023-07-01T07:00:00Z",
+			length: 1,
+		},
+		{
+			start:  "2023-06-01T07:00:00Z",
+			length: 2,
+		},
+		{
+			start:  "2023-05-01T07:00:00Z",
+			length: 3,
+		},
+	}
+
+	for _, testCase := range testCases {
+		blocks, err := db.GetBlocksAfterStart(
+			testCase.start,
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, testCase.length, len(blocks))
+	}
+}
+
+func TestGetBlocksBeforeEnd(t *testing.T) {
+	db := GetNewTestDatabase()
+	defer db.Close()
+
+	testBlocks := utils.CreateRangeTestBlocks()
+
+	for _, block := range testBlocks {
+		db.AddBlock(block)
+	}
+
+	testCases := []struct {
+		start  string
+		length int
+	}{
+		{
+			start:  "2023-05-01T07:00:00Z",
+			length: 0,
+		},
+		{
+			start:  "2023-05-31T07:00:00Z",
+			length: 1,
+		},
+		{
+			start:  "2023-06-30T07:00:00Z",
+			length: 2,
+		},
+		{
+			start:  "2023-07-31T07:00:00Z",
+			length: 3,
+		},
+	}
+
+	for _, testCase := range testCases {
+		blocks, err := db.GetBlocksBeforeEnd(
+			testCase.start,
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, testCase.length, len(blocks))
+	}
+}
+
 func TestGetAllBlocks(t *testing.T) {
 	db := GetNewTestDatabase()
 	defer db.Close()

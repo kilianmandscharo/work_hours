@@ -21,7 +21,7 @@ func NewRouter(db *database.DB) *gin.Engine {
 	r.PUT("/block_homeoffice/:id", h.handleUpdateBlockHomeoffice)
 	r.DELETE("/block/:id", h.handleDeleteBlock)
 	r.GET("/block/:id", h.handleGetBlockByID)
-	r.GET("/block", h.handleGetAllBlocks)
+	r.GET("/block", h.handleGetBlocksWithinRange)
 	r.POST("/pause", h.handleAddPause)
 	r.PUT("/pause", h.handleUpdatePause)
 	r.PUT("/pause_start/:id", h.handleUpdatePauseStart)

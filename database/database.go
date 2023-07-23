@@ -115,20 +115,11 @@ func (db *DB) Close() error {
 	return nil
 }
 
-func (db *DB) GetAllBlocks() ([]models.Block, error) {
-	q := `
-  SELECT * FROM block
-  `
-	rows, err := db.db.Query(q)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
+func (db *DB) getBlocksFromRows(rows *sql.Rows) ([]models.Block, error) {
 	var blocks []models.Block
 	for rows.Next() {
 		var b models.Block
-		err = rows.Scan(&b.Id, &b.Start, &b.End, &b.Homeoffice)
+		err := rows.Scan(&b.Id, &b.Start, &b.End, &b.Homeoffice)
 		if err != nil {
 			return nil, err
 		}
@@ -141,6 +132,69 @@ func (db *DB) GetAllBlocks() ([]models.Block, error) {
 
 		blocks = append(blocks, b)
 	}
+
+	return blocks, nil
+}
+
+func (db *DB) GetBlocksAfterStart(start string) ([]models.Block, error) {
+	q := `
+  SELECT * FROM block
+  WHERE start > date(?)
+  `
+	rows, err := db.db.Query(q, start)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	blocks, err := db.getBlocksFromRows(rows)
+
+	return blocks, nil
+}
+
+func (db *DB) GetBlocksBeforeEnd(end string) ([]models.Block, error) {
+	q := `
+  SELECT * FROM block
+  WHERE end < date(?)
+  `
+	rows, err := db.db.Query(q, end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	blocks, err := db.getBlocksFromRows(rows)
+
+	return blocks, nil
+}
+
+func (db *DB) GetBlocksWithinRange(start, end string) ([]models.Block, error) {
+	q := `
+  SELECT * FROM block
+  WHERE start > date(?) AND end < date(?)
+  `
+	rows, err := db.db.Query(q, start, end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	blocks, err := db.getBlocksFromRows(rows)
+
+	return blocks, nil
+}
+
+func (db *DB) GetAllBlocks() ([]models.Block, error) {
+	q := `
+  SELECT * FROM block
+  `
+	rows, err := db.db.Query(q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	blocks, err := db.getBlocksFromRows(rows)
 
 	return blocks, nil
 }

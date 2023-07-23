@@ -9,6 +9,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/kilianmandscharo/work_hours/auth"
 	"github.com/kilianmandscharo/work_hours/database"
+	"github.com/kilianmandscharo/work_hours/datetime"
 	"github.com/kilianmandscharo/work_hours/models"
 	"github.com/kilianmandscharo/work_hours/utils"
 )
@@ -177,8 +178,34 @@ func (r *RequestHandler) handleGetBlockByID(c *gin.Context) {
 	}
 }
 
-func (r *RequestHandler) handleGetAllBlocks(c *gin.Context) {
-	if blocks, err := r.db.GetAllBlocks(); err != nil {
+func (r *RequestHandler) handleGetBlocksWithinRange(c *gin.Context) {
+	start := c.Query("start")
+	end := c.Query("end")
+
+	if len(start) > 0 && !datetime.IsValidRFC3339(start) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid start format"})
+		return
+	}
+
+	if len(end) > 0 && !datetime.IsValidRFC3339(end) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid end format"})
+		return
+	}
+
+	var blocks []models.Block
+	var err error
+
+	if len(start) == 0 && len(end) == 0 {
+		blocks, err = r.db.GetAllBlocks()
+	} else if len(start) > 0 && len(end) > 0 {
+		blocks, err = r.db.GetBlocksWithinRange(start, end)
+	} else if len(start) > 0 {
+		blocks, err = r.db.GetBlocksAfterStart(start)
+	} else {
+		blocks, err = r.db.GetBlocksBeforeEnd(end)
+	}
+
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get blocks"})
 	} else if len(blocks) == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "no blocks available"})

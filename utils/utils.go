@@ -1,11 +1,10 @@
 package utils
 
 import (
+	"github.com/joho/godotenv"
 	"os"
 	"path/filepath"
 	"runtime"
-
-	"github.com/joho/godotenv"
 )
 
 type Env struct {

@@ -596,7 +596,7 @@ func TestGetBlockByIDRoute(t *testing.T) {
 	})
 }
 
-func TestGetAllBlocksRoute(t *testing.T) {
+func TestGetBlocksWithinRangeRoute(t *testing.T) {
 	db := database.GetNewTestDatabase()
 	defer db.Close()
 	r := NewRouter(db)
@@ -612,14 +612,105 @@ func TestGetAllBlocksRoute(t *testing.T) {
 			http.StatusNotFound)
 	})
 
-	t.Run("blocks found", func(t *testing.T) {
-		db.AddBlock(utils.TestBlockCreate())
+	for _, block := range utils.CreateRangeTestBlocks() {
+		db.AddBlock(block)
+	}
+
+	t.Run("no range provided", func(t *testing.T) {
 		utils.AssertRequest(
 			t,
 			r,
 			token,
 			http.MethodGet,
 			"/block",
+			http.StatusOK)
+	})
+
+	t.Run("invalid start", func(t *testing.T) {
+		utils.AssertRequest(
+			t,
+			r,
+			token,
+			http.MethodGet,
+			fmt.Sprintf("/block?start=%s", "invalid"),
+			http.StatusBadRequest)
+	})
+
+	t.Run("invalid end", func(t *testing.T) {
+		utils.AssertRequest(
+			t,
+			r,
+			token,
+			http.MethodGet,
+			fmt.Sprintf("/block?end=%s", "invalid"),
+			http.StatusBadRequest)
+	})
+
+	t.Run("valid start, no blocks found", func(t *testing.T) {
+		utils.AssertRequest(
+			t,
+			r,
+			token,
+			http.MethodGet,
+			fmt.Sprintf("/block?start=%s", "2023-07-31T07:00:00Z"),
+			http.StatusNotFound)
+	})
+
+	t.Run("valid start, blocks found", func(t *testing.T) {
+		utils.AssertRequest(
+			t,
+			r,
+			token,
+			http.MethodGet,
+			fmt.Sprintf("/block?start=%s", "2023-05-01T07:00:00Z"),
+			http.StatusOK)
+	})
+
+	t.Run("valid end, no blocks found", func(t *testing.T) {
+		utils.AssertRequest(
+			t,
+			r,
+			token,
+			http.MethodGet,
+			fmt.Sprintf("/block?end=%s", "2023-05-01T15:30:00Z"),
+			http.StatusNotFound)
+	})
+
+	t.Run("valid end, blocks found", func(t *testing.T) {
+		utils.AssertRequest(
+			t,
+			r,
+			token,
+			http.MethodGet,
+			fmt.Sprintf("/block?end=%s", "2023-07-31T15:30:00Z"),
+			http.StatusOK)
+	})
+
+	t.Run("valid range, no blocks found", func(t *testing.T) {
+		utils.AssertRequest(
+			t,
+			r,
+			token,
+			http.MethodGet,
+			fmt.Sprintf(
+				"/block?start=%s&end=%s",
+				"2023-01-01T07:00:00Z",
+				"2023-01-31T15:30:00Z",
+			),
+			http.StatusNotFound)
+	})
+
+	t.Run("valid range, blocks found", func(t *testing.T) {
+		utils.AssertRequest(
+			t,
+			r,
+			token,
+			http.MethodGet,
+			fmt.Sprintf(
+				"/block?start=%s&end=%s",
+				"2023-05-01T07:00:00Z",
+				"2023-07-31T15:30:00Z",
+			),
 			http.StatusOK)
 	})
 }

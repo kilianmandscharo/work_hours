@@ -144,3 +144,21 @@ func getTestReader(t *testing.T, data any) *bytes.Reader {
 	dataReader := bytes.NewReader(dataBytes)
 	return dataReader
 }
+
+func CreateRangeTestBlocks() []models.BlockCreate {
+	return []models.BlockCreate{
+		{
+			Start: "2023-05-09T07:00:00Z",
+			End:   "2023-05-09T15:30:00Z",
+		},
+		{
+			Start: "2023-06-09T07:00:00Z",
+			End:   "2023-06-09T15:30:00Z",
+		},
+		{
+			Start: "2023-07-09T07:00:00Z",
+			End:   "2023-07-09T15:30:00Z",
+		},
+	}
+
+}
